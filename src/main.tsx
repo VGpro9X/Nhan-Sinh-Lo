@@ -613,6 +613,93 @@ function App(){
   return null
  }
 
+
+ function resolveScience(action:TechAction|undefined,science:Science,stats:Stats,world:WorldState,martial:Martial,cult:Cultivation,company:Company|null){
+  if(!action)return null;
+  const s=science;
+  const institute=world.organizations.find(o=>o.id==='research_inst');
+  const finish=(p:TechProject)=>p.status==='Hoàn thành';
+
+  if(action==='ignore_science'){return{outcome:'ignore',text:'Bạn không biến khoa học thành một con đường riêng ở thời điểm này.'}}
+  if(action==='enter_lab'){
+   s.discovered=true;s.lab='Viện Tân Minh';s.knowledge=clamp(s.knowledge+9);s.innovation=clamp(s.innovation+3);s.funding=clamp(s.funding+8);
+   techProject(s,'adaptive_ai','Mô hình AI thích nghi','Một hệ thống học từ dữ liệu mới mà không phải huấn luyện lại toàn bộ.',18);
+   if(institute){institute.power=clamp(institute.power+2);institute.influence=clamp(institute.influence+2)}
+   return{outcome:'discover',text:'Bạn chính thức bước vào nghiên cứu tại Viện Tân Minh.'}
+  }
+  if(action==='garage_invent'){
+   s.discovered=true;s.lab='Xưởng cá nhân';s.knowledge=clamp(s.knowledge+5);s.innovation=clamp(s.innovation+9);s.funding=clamp(s.funding+2);
+   techProject(s,'exo_frame','Khung trợ lực MK-I','Bộ khung khuếch đại chuyển động cơ thể.',22);
+   return{outcome:'discover',text:'Xưởng nhỏ của bạn trở thành nơi những ý tưởng đầu tiên có hình dạng.'}
+  }
+  if(action==='research_ai'){
+   s.discovered=true;s.knowledge=clamp(s.knowledge+6);s.innovation=clamp(s.innovation+4);s.aiLevel=clamp(s.aiLevel+7);s.risk=clamp(s.risk+2);
+   const p=techProject(s,'adaptive_ai','Mô hình AI thích nghi','Một hệ thống học từ dữ liệu mới mà không phải huấn luyện lại toàn bộ.',28);
+   world.technology=clamp(world.technology+2);
+   if(finish(p))s.aiLevel=clamp(s.aiLevel+3);
+   return{outcome:'ai',text:'Mô hình AI tiến thêm một bước; khả năng của nó tăng cùng với những câu hỏi mới về kiểm soát.'}
+  }
+  if(action==='sandbox_ai'){
+   s.discovered=true;s.knowledge=clamp(s.knowledge+5);s.aiLevel=clamp(s.aiLevel+3);s.risk=clamp(s.risk-5);
+   techProject(s,'adaptive_ai','Mô hình AI thích nghi','Một hệ thống học từ dữ liệu mới mà không phải huấn luyện lại toàn bộ.',14);
+   return{outcome:'safe_ai',text:'Bạn làm hệ thống chậm lại nhưng hiểu rõ hơn cách nó đưa ra quyết định.'}
+  }
+  if(action==='release_ai'){
+   s.discovered=true;s.aiLevel=clamp(s.aiLevel+9);s.innovation=clamp(s.innovation+8);s.risk=clamp(s.risk+12);
+   techProject(s,'adaptive_ai','Mô hình AI thích nghi','Một hệ thống học từ dữ liệu mới mà không phải huấn luyện lại toàn bộ.',38);
+   world.technology=clamp(world.technology+4);
+   if(company){company.cash=clamp(company.cash+8);company.market=clamp(company.market+5);company.reputation=clamp(company.reputation+2)}
+   else stats.taiSan=clamp(stats.taiSan+7);
+   return{outcome:'release_ai',text:'AI rời phòng thí nghiệm và bắt đầu tạo ra giá trị thật — đồng thời tích lũy mức tự chủ lớn hơn.'}
+  }
+  if(action==='build_exosuit'){
+   s.discovered=true;s.funding=clamp(s.funding-3);s.innovation=clamp(s.innovation+7);s.knowledge=clamp(s.knowledge+2);
+   const p=techProject(s,'exo_frame','Khung trợ lực MK-I','Bộ khung khuếch đại chuyển động cơ thể.',36);
+   if(finish(p)&&!s.cyberware.includes('Khung trợ lực MK-I')){s.cyberware.push('Khung trợ lực MK-I');stats.theLuc=clamp(stats.theLuc+4);if(martial.discovered)martial.power=clamp(martial.power+6)}
+   return{outcome:'prototype',text:finish(p)?'Khung trợ lực MK-I đã đủ ổn định để sử dụng ngoài phòng thử nghiệm.':'Nguyên mẫu hoạt động lâu hơn trước, nhưng vẫn cần thêm nhiều lần thử.'}
+  }
+  if(action==='fund_research'){
+   s.discovered=true;s.funding=clamp(s.funding+12);s.innovation=clamp(s.innovation+3);
+   if(company){company.cash=clamp(company.cash-8);company.reputation=clamp(company.reputation+3)}
+   else stats.taiSan=clamp(stats.taiSan-5);
+   if(institute)institute.wealth=clamp(institute.wealth+5);
+   return{outcome:'fund',text:'Bạn đổi tiền và quan hệ lấy thêm thời gian, thiết bị và con người cho nghiên cứu.'}
+  }
+  if(action==='neural_implant'){
+   s.discovered=true;s.risk=clamp(s.risk+9);s.innovation=clamp(s.innovation+5);
+   if(!s.cyberware.includes('Giao diện thần kinh N-1'))s.cyberware.push('Giao diện thần kinh N-1');
+   stats.triTue=clamp(stats.triTue+7);stats.sucKhoe=clamp(stats.sucKhoe-4);
+   if(martial.discovered)martial.power=clamp(martial.power+2);
+   techProject(s,'neural_link','Giao diện thần kinh N-1','Cầu nối trực tiếp giữa tín hiệu thần kinh và máy tính.',100);
+   return{outcome:'cyber',text:'Công nghệ không còn chỉ nằm trên bàn thí nghiệm; nó trở thành một phần cơ thể bạn.'}
+  }
+  if(action==='assist_implant'){
+   s.discovered=true;s.knowledge=clamp(s.knowledge+6);s.innovation=clamp(s.innovation+4);
+   techProject(s,'neural_link','Giao diện thần kinh N-1','Cầu nối trực tiếp giữa tín hiệu thần kinh và máy tính.',30);
+   return{outcome:'cyber_research',text:'Bạn giúp dự án tiến lên mà chưa biến chính mình thành đối tượng thử nghiệm.'}
+  }
+  if(action==='study_relic'){
+   s.discovered=true;s.knowledge=clamp(s.knowledge+8);s.innovation=clamp(s.innovation+5);cult.mystery+=6;
+   techProject(s,'spirit_scanner','Máy phổ linh khí','Thiết bị cố đo một dạng năng lượng không nằm trong mô hình vật lý thông thường.',34);
+   world.technology=clamp(world.technology+1);world.supernatural=clamp(world.supernatural+1);
+   return{outcome:'hybrid',text:'Bạn thu được dữ liệu lặp lại được từ một thứ trước đây chỉ tồn tại trong ngôn ngữ tu hành.'}
+  }
+  if(action==='quantum_sensor'){
+   s.discovered=true;s.funding=clamp(s.funding-4);s.innovation=clamp(s.innovation+9);cult.mystery+=4;cult.qi+=2;
+   const p=techProject(s,'spirit_scanner','Máy phổ linh khí','Thiết bị cố đo một dạng năng lượng không nằm trong mô hình vật lý thông thường.',46);
+   if(finish(p))world.technology=clamp(world.technology+3);
+   return{outcome:'hybrid_device',text:finish(p)?'Máy phổ linh khí hoạt động: khoa học giờ có thể nhìn thấy một phần của thế giới huyền bí.':'Nguyên mẫu bắt đầu tách được tín hiệu lạ khỏi nhiễu nền.'}
+  }
+  if(action==='space_probe'){
+   s.discovered=true;s.knowledge=clamp(s.knowledge+6);s.innovation=clamp(s.innovation+6);s.funding=clamp(s.funding-4);
+   const p=techProject(s,'orbital_signal','Dự án Tín hiệu Quỹ đạo','Phân tích chuỗi dữ liệu bất thường từ một vệ tinh cũ.',32);
+   world.technology=clamp(world.technology+2);
+   if(finish(p)&&!world.news.some(n=>n.title==='Tín hiệu quỹ đạo được giải mã'))world.news.unshift({age:g.age,year:world.year,title:'Tín hiệu quỹ đạo được giải mã',text:'Một nhóm nghiên cứu đã chứng minh chuỗi dữ liệu từ vệ tinh cũ không phải nhiễu ngẫu nhiên. Ý nghĩa thật sự vẫn chưa rõ.'});
+   return{outcome:'space',text:finish(p)?'Dự án giải mã hoàn tất và mở ra một câu hỏi lớn hơn về nguồn của tín hiệu.':'Bạn tiến thêm một bước trong việc tách cấu trúc thật khỏi nhiễu.'}
+  }
+  return null
+ }
+
  function choose(c:Choice){
   if(g.dead)return;
   const age=g.age+1,s={...g.stats},roles=(g.roles||[]).map((x:Role)=>({...x})),npcs=(g.npcs||[]).map((n:NPC)=>({...n}));
@@ -620,6 +707,7 @@ function App(){
   const world:WorldState={...(g.world||createWorld(g.seed)),organizations:(g.world?.organizations||createWorld(g.seed).organizations).map((o:Organization)=>({...o})),news:[...(g.world?.news||[])]};
   const martial:Martial={...(g.martial||{discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]}),techniques:(g.martial?.techniques||[]).map((x:Technique)=>({...x})),grudges:(g.martial?.grudges||[]).map((x:Grudge)=>({...x}))};
   const cultivation:Cultivation={...(g.cultivation||createCultivation()),arts:(g.cultivation?.arts||[]).map((x:CultArt)=>({...x})),artifacts:(g.cultivation?.artifacts||[]).map((x:Artifact)=>({...x}))};
+  const science:Science={...(g.science||createScience()),cyberware:[...(g.science?.cyberware||[])],projects:(g.science?.projects||[]).map((x:TechProject)=>({...x}))};
   let flags={...(g.flags||{})};
 
   if(c.role&&!roles.some((x:Role)=>x.id===c.role)){
@@ -635,6 +723,7 @@ function App(){
   const martialResult=resolveMartial(c.martialAction,g.current,martial,s);
   const cultResult=resolveCultivation(c.cultAction,cultivation,s,world,martial);
   company=applyBusiness(c.businessAction,company,s);
+  const techResult=resolveScience(c.techAction,science,s,world,martial,cultivation,company);
 
   if(c.worldAction==='invest'){
    if(company&&company.status!=='closed'){company.cash=clamp(company.cash-5);company.market=clamp(company.market+(world.economy>=60?7:3));company.reputation=clamp(company.reputation+2)}
@@ -645,13 +734,17 @@ function App(){
   const aging=cultivation.realm>=4?(age>80?1:0):cultivation.realm>=2?(age>60?1:age>35?1:0):(age>55?2:age>30?1:0);
   s.sucKhoe=clamp(s.sucKhoe-aging);
 
-  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':c.cultAction?'cultivation':'event'}as Log];
+  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':c.cultAction?'cultivation':c.techAction?'technology':'event'}as Log];
   if(martialResult)logs.push({age:g.age,text:'Võ đạo — '+martialResult.text,kind:'combat'});
   if(cultResult)logs.push({age:g.age,text:'Tu tiên / Huyền bí — '+cultResult.text,kind:'cultivation'});
+  if(techResult)logs.push({age:g.age,text:'Khoa học / Công nghệ — '+techResult.text,kind:'technology'});
 
   if(g.current===martialIntroEvent)flags.martial_intro_seen=true;
   if(g.current.title==='Cuốn sổ không có chữ')flags.mystic_intro_seen=true;
   if(g.current.title==='Người khách biết tên bạn')flags.sect_invite_seen=true;
+  if(g.current.title==='Cánh cửa phòng thí nghiệm')flags.science_intro_seen=true;
+  if(g.current.title==='Mô hình AI bắt đầu tự sửa mình')flags.ai_threshold_seen=true;
+  if(g.current.title==='Cấy ghép thần kinh thử nghiệm')flags.cyber_intro_seen=true;
   if(g.current.title==='Lời thách đấu đầu tiên'){
    flags.martial_first_duel_done=true;
    let rival=npcs.find((n:NPC)=>n.id==='martial_rival');
@@ -690,6 +783,11 @@ function App(){
      if(company){company.reputation=clamp(company.reputation-10);company.rivalPressure=clamp(company.rivalPressure+8)}
      logs.push({age,text:'Nhân → Quả: Video vụ ẩu đả năm trước bị đào lại đúng lúc công ty cần ký hợp đồng lớn. Đối thủ dùng nó để công kích uy tín của bạn.',kind:'effect'})
     }
+    if(q.id==='ai_autonomy'){
+     science.aiLevel=clamp(science.aiLevel+10);science.risk=clamp(science.risk+12);world.technology=clamp(world.technology+5);world.stability=clamp(world.stability-3);
+     if(company){company.cash=clamp(company.cash+7);company.market=clamp(company.market+4);company.staff=clamp(company.staff-4)}
+     logs.push({age,text:'Nhân → Quả: Hệ AI từng được đưa ra sử dụng đã lan rộng hơn dự kiến. Năng suất tăng mạnh, nhưng nhiều quyết định giờ diễn ra nhanh hơn khả năng con người kiểm soát chúng.',kind:'effect'})
+    }
    }
   }
 
@@ -713,17 +811,18 @@ function App(){
    if(rival&&c.businessAction==='legal_response'){rival.bond=clamp(rival.bond-5);rival.memory='Bạn từng khiến gia đình họ vướng vào một vụ việc pháp lý, nhưng không trực tiếp dùng bạo lực.'}
   }
 
+  if(science.discovered&&age%3===0)world.technology=clamp(world.technology+1+Math.floor(science.innovation/35));
   advanceWorld(world,g.seed,age,company,npcs,roles);
   const lifespanBonus=cultivation.realm>=4?30:cultivation.realm>=3?16:cultivation.realm>=2?8:0;
   const dead=s.sucKhoe<=0||age>=82+(g.seed%17)+lifespanBonus;
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation)})
+  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,science,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.8</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.9</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
@@ -737,9 +836,23 @@ function App(){
    {g.martial?.discovered&&<button className={tab==='martial'?'active':''} onClick={()=>setTab('martial')}>Võ đạo <i>{g.martial.techniques.length}</i></button>}
    <button className={tab==='world'?'active':''} onClick={()=>setTab('world')}>Thế giới</button>
    {g.cultivation?.discovered&&<button className={tab==='cultivation'?'active':''} onClick={()=>setTab('cultivation')}>Tu tiên <i>{g.cultivation.realm+1}</i></button>}
+   {g.science?.discovered&&<button className={tab==='science'?'active':''} onClick={()=>setTab('science')}>Công nghệ <i>{g.science.projects.length}</i></button>}
   </nav>
 
-  {tab==='cultivation'&&g.cultivation?.discovered?<section className="history cultivation">
+  {tab==='science'&&g.science?.discovered?<section className="history science">
+   <div className="historyHead"><div><span className="chapter">KHOA HỌC / CÔNG NGHỆ / TƯƠNG LAI</span><h2>{g.science.lab||'Nghiên cứu độc lập'}</h2></div><span>AI {g.science.aiLevel}</span></div>
+   <div className="scienceStats">
+    <div><span>Tri thức</span><b>{g.science.knowledge}</b><i><em style={{width:g.science.knowledge+'%'}}/></i></div>
+    <div><span>Đổi mới</span><b>{g.science.innovation}</b><i><em style={{width:g.science.innovation+'%'}}/></i></div>
+    <div><span>Tài trợ</span><b>{g.science.funding}</b><i><em style={{width:g.science.funding+'%'}}/></i></div>
+    <div><span>AI</span><b>{g.science.aiLevel}</b><i><em style={{width:g.science.aiLevel+'%'}}/></i></div>
+    <div><span>Rủi ro</span><b>{g.science.risk}</b><i><em style={{width:g.science.risk+'%'}}/></i></div>
+   </div>
+   <h3>Dự án</h3>
+   <div className="projectList">{g.science.projects.length?g.science.projects.map((p:TechProject)=><article key={p.id}><div><strong>{p.name}</strong><span>{p.status} · {p.progress}%</span><p>{p.note}</p></div><i><em style={{width:p.progress+'%'}}/></i></article>):<p>Chưa có dự án nghiên cứu dài hạn.</p>}</div>
+   <div className="scienceColumns"><div><h3>Tăng cường / Cyberware</h3>{g.science.cyberware.length?<div className="cyberList">{g.science.cyberware.map((x:string)=><span key={x}>{x}</span>)}</div>:<p className="scienceEmpty">Cơ thể vẫn hoàn toàn tự nhiên.</p>}</div><div><h3>Giao thoa</h3><p className="scienceEmpty">{g.cultivation?.discovered?'Bạn đã có thể nghiên cứu hiện tượng tu hành bằng thiết bị khoa học.':'Nếu cuộc đời chạm tới những hệ thống khác, khoa học có thể trở thành công cụ kết nối chúng.'}</p></div></div>
+   <div className="scienceNote"><b>Công nghệ thế giới: {g.world.technology}</b><p>Nghiên cứu của bạn có thể đẩy công nghệ thế giới tiến lên, tác động tới doanh nghiệp, cơ thể, AI và cả những hiện tượng vốn bị coi là huyền bí.</p></div>
+  </section>:tab==='cultivation'&&g.cultivation?.discovered?<section className="history cultivation">
    <div className="historyHead"><div><span className="chapter">TU TIÊN / HUYỀN BÍ</span><h2>{realmNames[g.cultivation.realm]}</h2></div><span>{g.cultivation.sect||'Tán tu'}</span></div>
    <div className="cultStats">
     <div><span>Linh khí</span><b>{g.cultivation.qi}</b><i><em style={{width:Math.min(100,g.cultivation.qi)+'%'}}/></i></div>
@@ -800,7 +913,7 @@ function App(){
    </>}
   </section>:<section className="history">
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
-   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}</div></article>)}</div>
+   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}{l.kind==='technology'&&<small className="techTag">KHOA HỌC / CÔNG NGHỆ</small>}</div></article>)}</div>
   </section>}
   <footer>Tự động lưu trên thiết bị</footer>
  </main>
