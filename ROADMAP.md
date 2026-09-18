@@ -6,8 +6,8 @@ Canonical detail: [MASTER_PLAN.md](./MASTER_PLAN.md)
 - [x] Product vision / systemic life design
 - [x] Mandatory checkpoint test-gate defined
 - [x] V0.1 First Life Prototype — **USER APPROVED**
-- [x] V0.2 Nhân → Quả — **AWAITING USER TEST**
-- [ ] V0.3 NPC & Quan hệ
+- [x] V0.2 Nhân → Quả — **USER APPROVED**
+- [x] V0.3 NPC & Quan hệ — **AWAITING USER TEST**
 - [ ] V0.4 Nghề nghiệp không phải Class
 - [ ] V0.5 Doanh nhân & Thương Chiến
 - [ ] V0.6 Xung đột & Võ đạo
