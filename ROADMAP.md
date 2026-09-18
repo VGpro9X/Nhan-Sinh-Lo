@@ -10,8 +10,8 @@ Canonical detail: [MASTER_PLAN.md](./MASTER_PLAN.md)
 - [x] V0.3 NPC & Quan hệ — **USER APPROVED**
 - [x] V0.4 Nghề nghiệp không phải Class — **USER APPROVED**
 - [x] V0.5 Doanh nhân & Thương Chiến — **USER APPROVED**
-- [x] V0.6 Xung đột & Võ đạo — **AWAITING USER TEST**
-- [ ] V0.7 World Simulation
+- [x] V0.6 Xung đột & Võ đạo — **USER APPROVED**
+- [x] V0.7 World Simulation — **AWAITING USER TEST**
 - [ ] V0.8 Tu tiên / Huyền bí
 - [ ] V0.9 Khoa học / Công nghệ / Tương lai
 - [ ] V0.10 Biến cố quy mô lớn
