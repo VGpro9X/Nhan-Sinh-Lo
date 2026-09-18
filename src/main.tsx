@@ -3,7 +3,7 @@ import{createRoot}from'react-dom/client';
 import'./style.css';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
-type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'};
+type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'|'technology'};
 type Seed={id:string;createdAge:number;dueAge:number;label:string;resolved:boolean};
 type NPC={id:string;name:string;role:string;relation:string;bond:number;memory:string;alive:boolean};
 type Role={id:string;name:string;since:number;active:boolean;level:number};
@@ -17,12 +17,15 @@ type WorldState={year:number;economy:number;stability:number;technology:number;s
 type CultArt={id:string;name:string;level:number;kind:'method'|'spell'|'body'};
 type Artifact={id:string;name:string;grade:string;note:string};
 type Cultivation={discovered:boolean;spiritRoot:string;realm:number;qi:number;foundation:number;sect:string|null;arts:CultArt[];artifacts:Artifact[];mystery:number};
+type TechProject={id:string;name:string;progress:number;status:'Nghiên cứu'|'Hoàn thành';note:string};
+type Science={discovered:boolean;knowledge:number;innovation:number;funding:number;aiLevel:number;risk:number;lab:string|null;cyberware:string[];projects:TechProject[]};
 type BusinessAction='price_war'|'quality'|'supplier'|'retain_staff'|'promote_staff'|'lose_staff'|'expand'|'reserve'|'fight_rival_son'|'legal_response'|'walk_away';
 type WorldAction='upskill'|'save'|'invest'|'network'|'observe';
 type MartialAction='learn_fist'|'learn_step'|'train_fist'|'train_guard'|'train_step'|'strike'|'guard'|'evade'|'deescalate';
 type CultAction='awaken_breath'|'inspect_relic'|'ignore_mystery'|'meditate'|'refine_body'|'seek_clue'|'join_sect'|'refuse_sect'|'breakthrough'|'stabilize'|'delay_breakthrough'|'seal_spirit'|'follow_spirit'|'avoid_spirit';
+type TechAction='enter_lab'|'garage_invent'|'ignore_science'|'research_ai'|'sandbox_ai'|'release_ai'|'build_exosuit'|'fund_research'|'neural_implant'|'assist_implant'|'study_relic'|'quantum_sensor'|'space_probe';
 type CombatSpec={id:string;name:string;power:number;grudgeId?:string};
-type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction;cultAction?:CultAction};
+type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction;cultAction?:CultAction;techAction?:TechAction};
 type WorldCondition='weak_economy'|'strong_economy'|'tech_wave';
 type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec;worldCondition?:WorldCondition};
 
@@ -170,6 +173,69 @@ const cultivationEvents:Event[]=[
  ]}
 ];
 
+
+const scienceIntroEvent:Event={
+ title:'Cánh cửa phòng thí nghiệm',
+ body:'Viện Tân Minh mở một chương trình thử nghiệm cho những người có tư duy tốt, kể cả khi họ không phải nhà khoa học chuyên nghiệp. Một người phụ trách hỏi liệu bạn có muốn tham gia.',
+ min:19,max:90,
+ choices:[
+  {text:'Tham gia nhóm nghiên cứu',result:'Bạn bước vào một phòng thí nghiệm đầy thiết bị và bắt đầu học cách biến giả thuyết thành thí nghiệm.',effect:{triTue:3},techAction:'enter_lab'},
+  {text:'Tự mày mò ở một xưởng nhỏ',result:'Bạn chọn tự do hơn: ít tài trợ, nhiều sai sót, nhưng mọi ý tưởng đều là của mình.',effect:{taiSan:-3,triTue:2},techAction:'garage_invent'},
+  {text:'Không theo đuổi con đường này',result:'Bạn để công nghệ tiếp tục thay đổi thế giới mà không biến nó thành trọng tâm cuộc đời mình.',effect:{},techAction:'ignore_science'}
+ ]
+};
+
+const aiThresholdEvent:Event={
+ title:'Mô hình AI bắt đầu tự sửa mình',
+ body:'Hệ thống AI bạn phát triển không còn chỉ làm theo bộ dữ liệu ban đầu. Nó tự đề xuất cách viết lại một phần cấu trúc của chính nó để học nhanh hơn.',
+ min:20,max:100,
+ choices:[
+  {text:'Cho phép tiếp tục trong môi trường kiểm soát',result:'Bạn mở thêm quyền thử nghiệm nhưng giữ hệ thống trong vùng cách ly.',effect:{triTue:2},techAction:'research_ai'},
+  {text:'Khóa quyền tự sửa và kiểm chứng từng bước',result:'Bạn ưu tiên khả năng kiểm soát hơn tốc độ phát triển.',effect:{},techAction:'sandbox_ai'},
+  {text:'Đưa phiên bản mạnh ra sử dụng thực tế',result:'Bạn chấp nhận rủi ro để biến công nghệ thành lợi thế ngoài phòng thí nghiệm.',effect:{danhTieng:2},techAction:'release_ai',seed:{id:'ai_autonomy',label:'Một hệ thống ngày càng tự chủ',delay:4}}
+ ]
+};
+
+const cyberIntroEvent:Event={
+ title:'Cấy ghép thần kinh thử nghiệm',
+ body:'Một giao diện thần kinh thế hệ mới đã đủ ổn định để thử trên người. Nó có thể tăng tốc xử lý thông tin, nhưng không ai biết tác động dài hạn.',
+ min:22,max:100,
+ choices:[
+  {text:'Chấp nhận cấy ghép',result:'Bạn ký vào hồ sơ thử nghiệm và để một lớp công nghệ mới trở thành một phần cơ thể.',effect:{},techAction:'neural_implant'},
+  {text:'Tham gia nghiên cứu nhưng không cấy',result:'Bạn giúp tối ưu hệ thống từ bên ngoài và giữ cơ thể nguyên vẹn.',effect:{triTue:2},techAction:'assist_implant'},
+  {text:'Từ chối',result:'Bạn không muốn đánh đổi cơ thể lấy một công nghệ còn quá mới.',effect:{sucKhoe:1},techAction:'ignore_science'}
+ ]
+};
+
+const scienceEvents:Event[]=[
+ {title:'Một bài toán chưa ai giải được',body:'Một mô hình dự đoán liên tục cho kết quả sai ở đúng những tình huống quan trọng nhất. Nhóm nghiên cứu bắt đầu nghi ngờ giả định nền tảng.',min:19,max:90,choices:[
+  {text:'Xây lại mô hình từ đầu',result:'Bạn bỏ nhiều công sức để kiểm tra lại giả định và dữ liệu.',effect:{triTue:2},techAction:'research_ai'},
+  {text:'Tạo môi trường kiểm thử riêng',result:'Bạn ưu tiên hiểu vì sao hệ thống sai trước khi làm nó mạnh hơn.',effect:{},techAction:'sandbox_ai'},
+  {text:'Tìm tài trợ để mở rộng nhóm',result:'Bạn cố biến vấn đề kỹ thuật thành một dự án đủ lớn để có thêm người và thiết bị.',effect:{danhTieng:1},techAction:'fund_research'}
+ ]},
+ {title:'Bộ khung trợ lực đầu tiên',body:'Một nguyên mẫu khung trợ lực có thể khuếch đại chuyển động đã hoạt động được vài phút trước khi quá nhiệt.',min:20,max:90,choices:[
+  {text:'Tiếp tục hoàn thiện nguyên mẫu',result:'Bạn chấp nhận thêm chi phí để biến bản thử nghiệm thành thứ dùng được ngoài đời.',effect:{taiSan:-2},techAction:'build_exosuit'},
+  {text:'Dùng dữ liệu để nghiên cứu cơ thể người',result:'Bạn chưa vội chế tạo sản phẩm mà tập trung vào giới hạn sinh học.',effect:{triTue:3},techAction:'assist_implant'},
+  {text:'Tìm đối tác tài trợ',result:'Bạn mang nguyên mẫu đi thuyết phục người khác đầu tư.',effect:{danhTieng:2},techAction:'fund_research'}
+ ]},
+ {title:'Tín hiệu từ một vệ tinh cũ',body:'Một vệ tinh nghiên cứu tưởng đã chết bất ngờ phát lại chuỗi dữ liệu có cấu trúc. Không ai chắc đó là lỗi hệ thống hay một phát hiện thật sự.',min:25,max:100,choices:[
+  {text:'Dành tài nguyên giải mã tín hiệu',result:'Bạn biến một tín hiệu mơ hồ thành một dự án nghiên cứu dài hơi.',effect:{triTue:2},techAction:'space_probe'},
+  {text:'Công bố dữ liệu để nhiều nhóm cùng phân tích',result:'Bạn chia sẻ thông tin thay vì giữ độc quyền phát hiện.',effect:{danhTieng:3},techAction:'fund_research'},
+  {text:'Tạm gác vì bằng chứng quá yếu',result:'Bạn không để sự tò mò nuốt hết thời gian và tiền bạc.',effect:{},techAction:'ignore_science'}
+ ]}
+];
+
+const hybridScienceEvent:Event={
+ title:'Máy đo không giải thích được cổ vật',
+ body:'Thiết bị của bạn ghi nhận một dạng năng lượng quanh cổ vật tu hành, nhưng mọi mô hình vật lý hiện tại đều không mô tả đúng. Khoa học và huyền bí lần đầu va vào nhau ngay trên bàn thí nghiệm.',
+ min:20,max:100,
+ choices:[
+  {text:'Phân tích cổ vật bằng mọi cảm biến có thể',result:'Bạn cố biến thứ huyền bí thành dữ liệu có thể lặp lại và kiểm chứng.',effect:{triTue:3},techAction:'study_relic'},
+  {text:'Chế tạo cảm biến riêng cho linh khí',result:'Bạn không cố phủ nhận hiện tượng mà xây công cụ mới để đo nó.',effect:{taiSan:-3},techAction:'quantum_sensor'},
+  {text:'Tách hai lĩnh vực ra để tránh rủi ro',result:'Bạn giữ việc tu hành và nghiên cứu khoa học ở hai thế giới khác nhau.',effect:{},techAction:'ignore_science'}
+ ]
+};
+
 const roleEvents:Event[]=[
  {title:'Áp lực nơi làm việc',body:'Một dự án ở nơi làm việc gặp trục trặc. Đồng nghiệp đang chờ xem bạn phản ứng thế nào.',min:19,max:70,role:'employee',choices:[
   {text:'Nhận thêm trách nhiệm',result:'Bạn đứng ra xử lý phần việc khó.',effect:{danhTieng:4,sucKhoe:-2}},
@@ -264,6 +330,18 @@ function addArtifact(c:Cultivation,id:string,name:string,grade:string,note:strin
  if(!c.artifacts.some(x=>x.id===id))c.artifacts.push({id,name,grade,note})
 }
 
+
+function createScience():Science{
+ return{discovered:false,knowledge:0,innovation:0,funding:0,aiLevel:0,risk:0,lab:null,cyberware:[],projects:[]}
+}
+function techProject(s:Science,id:string,name:string,note:string,amount:number){
+ let p=s.projects.find(x=>x.id===id);
+ if(!p){p={id,name,progress:0,status:'Nghiên cứu',note};s.projects.push(p)}
+ p.progress=Math.min(100,p.progress+amount);
+ if(p.progress>=100)p.status='Hoàn thành';
+ return p
+}
+
 function createWorld(seed:number):WorldState{
  const r=rng(seed+4049);
  return{
@@ -344,6 +422,7 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),
   martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
   cultivation:createCultivation(),
+  science:createScience(),
   npcs:[
    {id:'me',name:'Mẹ',role:'Gia đình',relation:'Mẹ',bond:78,memory:'Người đã chăm sóc bạn từ thuở nhỏ.',alive:true},
    {id:'friend',name:['Huy','Mai','Tùng','Lan'][Math.floor(r()*4)],role:'Bạn thuở nhỏ',relation:'Bạn bè',bond:45,memory:'Hai người từng chia sẻ những ngày tuổi thơ.',alive:true}
@@ -373,19 +452,26 @@ function App(){
    if(!old.cultivation)old.cultivation=createCultivation();
    if(!old.cultivation.arts)old.cultivation.arts=[];
    if(!old.cultivation.artifacts)old.cultivation.artifacts=[];
+   if(!old.science)old.science=createScience();
+   if(!old.science.projects)old.science.projects=[];
+   if(!old.science.cyberware)old.science.cyberware=[];
    return old
   }catch{return fresh()}
  });
- const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'|'cultivation'>('life');
+ const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'|'cultivation'|'science'>('life');
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation){
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science){
   if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
   if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
   const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
   if(dueGrudge)return revengeEvent(dueGrudge);
   if(age>=18&&roles.length===0)return careerEvent;
+  const activeEarly=roles.filter(x=>x.active).map(x=>x.id);
+  if(!flags.science_intro_seen&&((age>=19&&activeEarly.includes('researcher'))||(age>=22&&world.technology>=68)))return scienceIntroEvent;
+  if(science.discovered&&science.aiLevel>=18&&!flags.ai_threshold_seen)return aiThresholdEvent;
+  if(science.discovered&&world.technology>=76&&!flags.cyber_intro_seen)return cyberIntroEvent;
   if(age>=20&&!flags.mystic_intro_seen&&world.supernatural>=4)return mysticIntroEvent;
   if(cult.discovered&&!cult.sect&&cult.qi>=10&&!flags.sect_invite_seen)return sectInviteEvent;
   if(cult.discovered&&cult.realm<realmNames.length-1&&cult.qi>=realmQi[cult.realm])return breakthroughEvent(cult);
@@ -396,17 +482,20 @@ function App(){
   const business=company&&company.status!=='closed'?businessEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role)):[];
   const martialPool=martial.discovered?martialEvents.filter(e=>age>=e.min&&age<=e.max):[];
   const cultivationPool=cult.discovered?cultivationEvents.filter(e=>age>=e.min&&age<=e.max):[];
+  const sciencePool=science.discovered?scienceEvents.filter(e=>age>=e.min&&age<=e.max&&!(e.title==='Tín hiệu từ một vệ tinh cũ'&&world.technology<78)):[];
+  const hybridSciencePool=science.discovered&&cult.discovered?[hybridScienceEvent]:[];
   const generic=events.filter(e=>age>=e.min&&age<=e.max);
   const worldPool=worldEvents.filter(e=>age>=e.min&&age<=e.max&&((e.worldCondition==='weak_economy'&&world.economy<=42)||(e.worldCondition==='strong_economy'&&world.economy>=66)||(e.worldCondition==='tech_wave'&&world.technology>=58)));
   const r=rng(seed+turn*9973);
   let pool=[...generic,...profession,...worldPool];
   const roll=r();
-  if(business.length&&roll<.42)pool=[...business,...business,...generic,...martialPool,...cultivationPool];
-  else if(cultivationPool.length&&roll<.64)pool=[...cultivationPool,...cultivationPool,...generic,...profession,...martialPool];
-  else if(martialPool.length&&roll<.78)pool=[...martialPool,...martialPool,...generic,...profession,...cultivationPool];
-  else if(profession.length&&roll<.89)pool=[...profession,...profession,...generic,...cultivationPool];
-  else if(worldPool.length&&roll<.96)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool,...cultivationPool];
-  else pool=[...generic,...profession,...martialPool,...cultivationPool,...worldPool];
+  if(business.length&&roll<.36)pool=[...business,...business,...generic,...martialPool,...cultivationPool,...sciencePool];
+  else if(sciencePool.length&&roll<.55)pool=[...sciencePool,...sciencePool,...hybridSciencePool,...generic,...profession];
+  else if(cultivationPool.length&&roll<.70)pool=[...cultivationPool,...cultivationPool,...hybridSciencePool,...generic,...profession,...martialPool];
+  else if(martialPool.length&&roll<.80)pool=[...martialPool,...martialPool,...generic,...profession,...cultivationPool];
+  else if(profession.length&&roll<.89)pool=[...profession,...profession,...generic,...cultivationPool,...sciencePool];
+  else if(worldPool.length&&roll<.96)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool,...cultivationPool,...sciencePool];
+  else pool=[...generic,...profession,...martialPool,...cultivationPool,...sciencePool,...hybridSciencePool,...worldPool];
   return pool[Math.floor(r()*pool.length)]||events[4]
  }
 
