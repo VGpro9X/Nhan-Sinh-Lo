@@ -3,7 +3,7 @@ import{createRoot}from'react-dom/client';
 import'./style.css';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
-type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'};
+type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'};
 type Seed={id:string;createdAge:number;dueAge:number;label:string;resolved:boolean};
 type NPC={id:string;name:string;role:string;relation:string;bond:number;memory:string;alive:boolean};
 type Role={id:string;name:string;since:number;active:boolean;level:number};
@@ -11,11 +11,16 @@ type Company={name:string;foundedAge:number;cash:number;market:number;reputation
 type Technique={id:string;name:string;level:number;kind:'attack'|'defense'|'movement'};
 type Grudge={npcId:string;level:number;reason:string;dueAge:number;active:boolean};
 type Martial={discovered:boolean;power:number;experience:number;wounds:number;techniques:Technique[];grudges:Grudge[]};
+type Organization={id:string;name:string;kind:string;power:number;wealth:number;influence:number;status:string};
+type WorldNews={age:number;year:number;title:string;text:string};
+type WorldState={year:number;economy:number;stability:number;technology:number;supernatural:number;organizations:Organization[];news:WorldNews[]};
 type BusinessAction='price_war'|'quality'|'supplier'|'retain_staff'|'promote_staff'|'lose_staff'|'expand'|'reserve'|'fight_rival_son'|'legal_response'|'walk_away';
+type WorldAction='upskill'|'save'|'invest'|'network'|'observe';
 type MartialAction='learn_fist'|'learn_step'|'train_fist'|'train_guard'|'train_step'|'strike'|'guard'|'evade'|'deescalate';
 type CombatSpec={id:string;name:string;power:number;grudgeId?:string};
-type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction};
-type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec};
+type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction};
+type WorldCondition='weak_economy'|'strong_economy'|'tech_wave';
+type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec;worldCondition?:WorldCondition};
 
 const careerEvent:Event={
  title:'Ngã rẽ trưởng thành',
@@ -80,6 +85,25 @@ function revengeEvent(grudge:Grudge):Event{
   ]
  }
 }
+
+
+const worldEvents:Event[]=[
+ {title:'Thị trường lao động chững lại',body:'Nhiều công ty trong thành phố đồng loạt thắt chặt tuyển dụng. Không ai nhắm riêng vào bạn — cả nền kinh tế đang chậm lại.',min:18,max:70,worldCondition:'weak_economy',choices:[
+  {text:'Dành thời gian học thêm kỹ năng',result:'Bạn dùng giai đoạn khó khăn để bổ sung năng lực cho mình.',effect:{triTue:4,taiSan:-2},worldAction:'upskill'},
+  {text:'Thắt chặt chi tiêu và giữ tiền',result:'Bạn giảm rủi ro cá nhân để chờ thị trường ổn định hơn.',effect:{taiSan:3},worldAction:'save'},
+  {text:'Tiếp tục như bình thường',result:'Bạn không để biến động bên ngoài thay đổi nhịp sống của mình.',effect:{},worldAction:'observe'}
+ ]},
+ {title:'Một làn sóng công nghệ mới',body:'Công nghệ mới lan nhanh qua trường học, doanh nghiệp và đời sống. Một số công việc biến đổi chỉ trong vài năm.',min:18,max:75,worldCondition:'tech_wave',choices:[
+  {text:'Học cách sử dụng công nghệ mới',result:'Bạn chủ động thích nghi trước khi nó trở thành tiêu chuẩn.',effect:{triTue:4},worldAction:'upskill'},
+  {text:'Tìm người đang đi trước để kết nối',result:'Bạn mở rộng mạng lưới quanh một xu hướng đang tăng tốc.',effect:{danhTieng:3},worldAction:'network'},
+  {text:'Quan sát thêm trước khi nhập cuộc',result:'Bạn chờ xem xu hướng nào thực sự tồn tại lâu dài.',effect:{triTue:1},worldAction:'observe'}
+ ]},
+ {title:'Thị trường tăng trưởng nóng',body:'Tiền và cơ hội lưu chuyển nhanh hơn. Người ta nói nhiều về mở rộng, đầu tư và những người giàu lên rất nhanh.',min:19,max:70,worldCondition:'strong_economy',choices:[
+  {text:'Chấp nhận rủi ro để đầu tư',result:'Bạn đưa một phần nguồn lực vào cơ hội mới.',effect:{taiSan:-2},worldAction:'invest'},
+  {text:'Mở rộng quan hệ',result:'Bạn ưu tiên gặp người mới thay vì lao ngay vào một thương vụ.',effect:{danhTieng:3},worldAction:'network'},
+  {text:'Không chạy theo đám đông',result:'Bạn giữ nhịp sống riêng dù bên ngoài đang rất sôi động.',effect:{sucKhoe:2},worldAction:'observe'}
+ ]}
+];
 
 const roleEvents:Event[]=[
  {title:'Áp lực nơi làm việc',body:'Một dự án ở nơi làm việc gặp trục trặc. Đồng nghiệp đang chờ xem bạn phản ứng thế nào.',min:19,max:70,role:'employee',choices:[
@@ -156,6 +180,72 @@ const companyNames=['Mộc Phong','Bắc Minh','Hải Đăng','Tân Lộ','Thiê
 const clamp=(n:number)=>Math.max(0,Math.min(100,n));
 const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân'};
 
+
+function createWorld(seed:number):WorldState{
+ const r=rng(seed+4049);
+ return{
+  year:2026,
+  economy:48+Math.floor(r()*17),
+  stability:52+Math.floor(r()*17),
+  technology:38+Math.floor(r()*12),
+  supernatural:3+Math.floor(r()*5),
+  organizations:[
+   {id:'corp_union',name:'Liên Minh Thương Hội',kind:'Kinh tế',power:52,wealth:64,influence:49,status:'Đang mở rộng'},
+   {id:'martial_assoc',name:'Hội Võ Thuật Bắc Thành',kind:'Võ đạo',power:46,wealth:31,influence:42,status:'Hoạt động ổn định'},
+   {id:'research_inst',name:'Viện Tân Minh',kind:'Khoa học',power:38,wealth:44,influence:47,status:'Đang nghiên cứu'}
+  ],
+  news:[{age:0,year:2026,title:'Một thế giới đang vận động',text:'Bạn ra đời trong một xã hội đã có những tổ chức, thị trường và xu hướng riêng — chúng sẽ tiếp tục thay đổi dù bạn có chú ý hay không.'}]
+ }
+}
+
+function advanceWorld(world:WorldState,seed:number,age:number,company:Company|null,npcs:NPC[],roles:Role[]){
+ const r=rng(seed+age*12347+world.year*17);
+ world.year+=1;
+ const oldEconomy=world.economy,oldTech=world.technology,oldStability=world.stability;
+ world.economy=clamp(world.economy+Math.floor(r()*11)-5);
+ world.stability=clamp(world.stability+Math.floor(r()*9)-4);
+ world.technology=clamp(world.technology+1+Math.floor(r()*3));
+ world.supernatural=clamp(world.supernatural+(r()<.16?1:0));
+
+ for(const o of world.organizations){
+  o.power=clamp(o.power+Math.floor(r()*9)-4);
+  o.wealth=clamp(o.wealth+Math.floor(r()*11)-5+(world.economy>60?2:world.economy<40?-2:0));
+  o.influence=clamp(o.influence+Math.floor(r()*9)-4);
+  if(o.power<25)o.status='Suy yếu';
+  else if(o.influence>70)o.status='Ảnh hưởng mạnh';
+  else if(o.wealth>70)o.status='Đang mở rộng';
+  else o.status='Hoạt động ổn định';
+ }
+
+ if(company&&company.status!=='closed'){
+  const eco=world.economy>62?2:world.economy<38?-3:0;
+  company.cash=clamp(company.cash+eco);
+  company.market=clamp(company.market+(world.economy>68?2:world.economy<34?-2:0));
+  if(world.stability<35)company.rivalPressure=clamp(company.rivalPressure+2);
+ }
+
+ const friend=npcs.find(n=>n.id==='friend');
+ if(friend&&age>=18&&age%6===0){
+  const options=[
+   'Trong lúc bạn bận với cuộc sống riêng, họ đã chuyển sang một công việc mới ở nơi khác.',
+   'Họ đang dần xây dựng cuộc sống riêng và ít xuất hiện hơn trước.',
+   'Một thay đổi của thị trường khiến công việc của họ đảo lộn, nhưng họ vẫn đang tự xoay xở.'
+  ];
+  friend.memory=options[Math.floor(r()*options.length)];
+  friend.bond=clamp(friend.bond-2);
+ }
+
+ if(age>0&&age%3===0){
+  let title='Nhịp thế giới thay đổi',text='Không có biến cố đơn lẻ nào chi phối tất cả, nhưng môi trường quanh bạn đã khác vài năm trước.';
+  if(world.economy-oldEconomy>=4){title='Thị trường khởi sắc';text='Hoạt động kinh tế tăng nhanh, doanh nghiệp và người lao động đều cảm nhận rõ cơ hội mới.'}
+  else if(world.economy-oldEconomy<=-4){title='Kinh tế chững lại';text='Dòng tiền thận trọng hơn, tuyển dụng và đầu tư bắt đầu chậm lại.'}
+  else if(world.technology-oldTech>=3){title='Công nghệ tăng tốc';text='Một lớp công nghệ mới đang dần thay đổi cách người ta học tập và làm việc.'}
+  else if(world.stability-oldStability<=-3){title='Xã hội nhiều biến động';text='Những bất ổn nhỏ xuất hiện dày hơn, khiến các tổ chức trở nên dè chừng.'}
+  world.news.unshift({age,year:world.year,title,text});
+  world.news=world.news.slice(0,12);
+ }
+}
+
 function addOrLevelTechnique(m:Martial,id:string,name:string,kind:Technique['kind']){
  const found=m.techniques.find(x=>x.id===id);
  if(found)found.level=Math.min(5,found.level+1);
@@ -168,7 +258,7 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   seed,age:0,name:names[Math.floor(r()*names.length)],
   stats:{sucKhoe:80+Math.floor(r()*16),triTue:25+Math.floor(r()*31),theLuc:25+Math.floor(r()*31),danhTieng:0,taiSan:10},
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
-  seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,
+  seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),
   martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
   npcs:[
    {id:'me',name:'Mẹ',role:'Gia đình',relation:'Mẹ',bond:78,memory:'Người đã chăm sóc bạn từ thuở nhỏ.',alive:true},
@@ -190,17 +280,20 @@ function App(){
    if(!old.npcs){const base=fresh(old.seed);old.npcs=base.npcs}
    if(!old.roles)old.roles=[];
    if(old.company===undefined)old.company=null;
+   if(!old.world)old.world=createWorld(old.seed);
+   if(!old.world.organizations)old.world.organizations=createWorld(old.seed).organizations;
+   if(!old.world.news)old.world.news=[];
    if(!old.martial)old.martial={discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]};
    if(!old.martial.techniques)old.martial.techniques=[];
    if(!old.martial.grudges)old.martial.grudges=[];
    return old
   }catch{return fresh()}
  });
- const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'>('life');
+ const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'>('life');
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={}){
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState){
   if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
   if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
   const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
@@ -213,13 +306,15 @@ function App(){
   const business=company&&company.status!=='closed'?businessEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role)):[];
   const martialPool=martial.discovered?martialEvents.filter(e=>age>=e.min&&age<=e.max):[];
   const generic=events.filter(e=>age>=e.min&&age<=e.max);
+  const worldPool=worldEvents.filter(e=>age>=e.min&&age<=e.max&&((e.worldCondition==='weak_economy'&&world.economy<=42)||(e.worldCondition==='strong_economy'&&world.economy>=66)||(e.worldCondition==='tech_wave'&&world.technology>=58)));
   const r=rng(seed+turn*9973);
-  let pool=[...generic,...profession];
+  let pool=[...generic,...profession,...worldPool];
   const roll=r();
   if(business.length&&roll<.48)pool=[...business,...business,...generic,...martialPool];
   else if(martialPool.length&&roll<.72)pool=[...martialPool,...martialPool,...generic,...profession];
   else if(profession.length&&roll<.88)pool=[...profession,...profession,...generic];
-  else pool=[...generic,...profession,...martialPool];
+  else if(worldPool.length&&roll<.95)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool];
+  else pool=[...generic,...profession,...martialPool,...worldPool];
   return pool[Math.floor(r()*pool.length)]||events[4]
  }
 
@@ -294,6 +389,7 @@ function App(){
   if(g.dead)return;
   const age=g.age+1,s={...g.stats},roles=(g.roles||[]).map((x:Role)=>({...x})),npcs=(g.npcs||[]).map((n:NPC)=>({...n}));
   let company=g.company?{...g.company}:null;
+  const world:WorldState={...(g.world||createWorld(g.seed)),organizations:(g.world?.organizations||createWorld(g.seed).organizations).map((o:Organization)=>({...o})),news:[...(g.world?.news||[])]};
   const martial:Martial={...(g.martial||{discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]}),techniques:(g.martial?.techniques||[]).map((x:Technique)=>({...x})),grudges:(g.martial?.grudges||[]).map((x:Grudge)=>({...x}))};
   let flags={...(g.flags||{})};
 
@@ -309,6 +405,13 @@ function App(){
   for(const[k,v]of Object.entries(c.effect))s[k as keyof Stats]=clamp(s[k as keyof Stats]+(v||0));
   const martialResult=resolveMartial(c.martialAction,g.current,martial,s);
   company=applyBusiness(c.businessAction,company,s);
+
+  if(c.worldAction==='invest'){
+   if(company&&company.status!=='closed'){company.cash=clamp(company.cash-5);company.market=clamp(company.market+(world.economy>=60?7:3));company.reputation=clamp(company.reputation+2)}
+   else s.taiSan=clamp(s.taiSan+(world.economy>=60?6:2));
+  }
+  if(c.worldAction==='network'&&company)company.reputation=clamp(company.reputation+3);
+  if(c.worldAction==='save'&&company)company.cash=clamp(company.cash+3);
   s.sucKhoe=clamp(s.sucKhoe-(age>55?2:age>30?1:0));
 
   let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':'event'}as Log];
@@ -376,15 +479,16 @@ function App(){
    if(rival&&c.businessAction==='legal_response'){rival.bond=clamp(rival.bond-5);rival.memory='Bạn từng khiến gia đình họ vướng vào một vụ việc pháp lý, nhưng không trực tiếp dùng bạo lực.'}
   }
 
+  advanceWorld(world,g.seed,age,company,npcs,roles);
   const dead=s.sucKhoe<=0||age>=82+(g.seed%17);
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags)})
+  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.6</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.7</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
@@ -396,9 +500,22 @@ function App(){
    <button className={tab==='roles'?'active':''} onClick={()=>setTab('roles')}>Vai trò <i>{(g.roles||[]).length}</i></button>
    {g.company&&<button className={tab==='business'?'active':''} onClick={()=>setTab('business')}>Doanh nghiệp</button>}
    {g.martial?.discovered&&<button className={tab==='martial'?'active':''} onClick={()=>setTab('martial')}>Võ đạo <i>{g.martial.techniques.length}</i></button>}
+   <button className={tab==='world'?'active':''} onClick={()=>setTab('world')}>Thế giới</button>
   </nav>
 
-  {tab==='martial'&&g.martial?.discovered?<section className="history martial">
+  {tab==='world'?<section className="history world">
+   <div className="historyHead"><div><span className="chapter">THẾ GIỚI KHÔNG CHỜ BẠN</span><h2>Năm {g.world.year}</h2></div><span>Tuổi của bạn: {g.age}</span></div>
+   <div className="worldStats">
+    <div><span>Kinh tế</span><b>{g.world.economy}</b><i><em style={{width:g.world.economy+'%'}}/></i></div>
+    <div><span>Ổn định</span><b>{g.world.stability}</b><i><em style={{width:g.world.stability+'%'}}/></i></div>
+    <div><span>Công nghệ</span><b>{g.world.technology}</b><i><em style={{width:g.world.technology+'%'}}/></i></div>
+    <div><span>Siêu nhiên</span><b>{g.world.supernatural}</b><i><em style={{width:g.world.supernatural+'%'}}/></i></div>
+   </div>
+   <h3>Tổ chức</h3>
+   <div className="orgList">{g.world.organizations.map((o:Organization)=><article key={o.id}><div><strong>{o.name}</strong><span>{o.kind} · {o.status}</span></div><div className="orgNumbers"><b>{o.power}</b><small>Sức mạnh</small><b>{o.influence}</b><small>Ảnh hưởng</small></div></article>)}</div>
+   <h3>Biến động gần đây</h3>
+   <div className="worldNews">{g.world.news.length?g.world.news.map((n:WorldNews,i:number)=><article key={i}><b>{n.year}</b><div><strong>{n.title}</strong><p>{n.text}</p></div></article>):<p>Thế giới chưa ghi nhận biến động đáng chú ý.</p>}</div>
+  </section>:tab==='martial'&&g.martial?.discovered?<section className="history martial">
    <div className="historyHead"><div><span className="chapter">XUNG ĐỘT & VÕ ĐẠO</span><h2>Võ đạo của {g.name}</h2></div><span>Kinh nghiệm {g.martial.experience}</span></div>
    <div className="martialStats">
     <div><span>Thực lực</span><b>{g.martial.power}</b></div>
@@ -434,7 +551,7 @@ function App(){
    </>}
   </section>:<section className="history">
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
-   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}</div></article>)}</div>
+   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}</div></article>)}</div>
   </section>}
   <footer>Tự động lưu trên thiết bị</footer>
  </main>
