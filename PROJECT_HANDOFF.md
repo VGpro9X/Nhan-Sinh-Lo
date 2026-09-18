@@ -14,7 +14,7 @@ Read MASTER_PLAN.md before development. Nhân Sinh Lộ is a systemic choice-dri
 After each meaningful version/checkpoint: finish only that checkpoint; build/test; commit/push main; deploy GitHub Pages; report version + test URL + checklist; STOP; continue only after explicit user approval.
 
 ## Current status
-**V0.1 — First Life Prototype implemented. AWAITING USER TEST.**
+**V0.2 — Nhân → Quả implemented. AWAITING USER TEST.**
 Implemented: React/Vite/TypeScript responsive shell, random Tân Sinh, age progression, 5 stats, seeded event selection, choices with hidden effects, timeline, natural end-of-life, New Life, localStorage persistence and GitHub Pages workflow.
 
-Do not start V0.2 until the user explicitly approves V0.1. If a bug is reported, fix and redeploy V0.1 first.
+V0.1 was accepted by the user. V0.2 adds persistent consequence seeds, hidden flags, delayed callbacks, consequence chronicle markers, and save-compatible fallback for V0.1 saves. Do not start V0.3 until the user explicitly approves V0.2. If a bug is reported, fix and redeploy V0.2 first.
