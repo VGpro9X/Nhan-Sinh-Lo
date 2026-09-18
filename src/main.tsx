@@ -3,7 +3,7 @@ import{createRoot}from'react-dom/client';
 import'./style.css';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
-type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'};
+type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'};
 type Seed={id:string;createdAge:number;dueAge:number;label:string;resolved:boolean};
 type NPC={id:string;name:string;role:string;relation:string;bond:number;memory:string;alive:boolean};
 type Role={id:string;name:string;since:number;active:boolean;level:number};
@@ -14,11 +14,15 @@ type Martial={discovered:boolean;power:number;experience:number;wounds:number;te
 type Organization={id:string;name:string;kind:string;power:number;wealth:number;influence:number;status:string};
 type WorldNews={age:number;year:number;title:string;text:string};
 type WorldState={year:number;economy:number;stability:number;technology:number;supernatural:number;organizations:Organization[];news:WorldNews[]};
+type CultArt={id:string;name:string;level:number;kind:'method'|'spell'|'body'};
+type Artifact={id:string;name:string;grade:string;note:string};
+type Cultivation={discovered:boolean;spiritRoot:string;realm:number;qi:number;foundation:number;sect:string|null;arts:CultArt[];artifacts:Artifact[];mystery:number};
 type BusinessAction='price_war'|'quality'|'supplier'|'retain_staff'|'promote_staff'|'lose_staff'|'expand'|'reserve'|'fight_rival_son'|'legal_response'|'walk_away';
 type WorldAction='upskill'|'save'|'invest'|'network'|'observe';
 type MartialAction='learn_fist'|'learn_step'|'train_fist'|'train_guard'|'train_step'|'strike'|'guard'|'evade'|'deescalate';
+type CultAction='awaken_breath'|'inspect_relic'|'ignore_mystery'|'meditate'|'refine_body'|'seek_clue'|'join_sect'|'refuse_sect'|'breakthrough'|'stabilize'|'delay_breakthrough'|'seal_spirit'|'follow_spirit'|'avoid_spirit';
 type CombatSpec={id:string;name:string;power:number;grudgeId?:string};
-type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction};
+type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction;cultAction?:CultAction};
 type WorldCondition='weak_economy'|'strong_economy'|'tech_wave';
 type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec;worldCondition?:WorldCondition};
 
@@ -105,6 +109,67 @@ const worldEvents:Event[]=[
  ]}
 ];
 
+
+const mysticIntroEvent:Event={
+ title:'Cuốn sổ không có chữ',
+ body:'Trong một quầy sách cũ, bạn nhặt được cuốn sổ giấy vàng. Dưới ánh đèn không có gì đặc biệt, nhưng khi đặt tay lên bìa, bạn nghe một nhịp rung rất khẽ từ bên trong cơ thể.',
+ min:16,max:80,
+ choices:[
+  {text:'Ngồi yên và thử cảm nhận nhịp rung',result:'Bạn làm theo trực giác, điều hòa hơi thở và lần đầu cảm thấy một dòng khí rất mỏng chạy qua kinh mạch.',effect:{triTue:2},cultAction:'awaken_breath'},
+  {text:'Mang cuốn sổ về nghiên cứu',result:'Bạn chưa tin vào chuyện siêu nhiên, nhưng những ký hiệu mờ dần hiện ra khi đêm xuống.',effect:{triTue:3},cultAction:'inspect_relic'},
+  {text:'Đặt lại chỗ cũ và rời đi',result:'Bạn quyết định không chạm sâu hơn vào thứ mình chưa hiểu.',effect:{},cultAction:'ignore_mystery'}
+ ]
+};
+
+const sectInviteEvent:Event={
+ title:'Người khách biết tên bạn',
+ body:'Một người lạ tìm đến đúng lúc chạng vạng. Họ gọi chính xác tên bạn và nói rằng những gì bạn đang tự mò mẫm chỉ là bước đầu của “con đường luyện khí”.',
+ min:16,max:100,
+ choices:[
+  {text:'Theo họ tới Ẩn Sơn Môn',result:'Bạn bước qua một lối nhỏ trên núi và phát hiện một thế giới tu hành vẫn tồn tại song song với đời thường.',effect:{triTue:2},cultAction:'join_sect'},
+  {text:'Chỉ hỏi phương pháp rồi từ chối gia nhập',result:'Bạn giữ tự do của mình, đổi lấy việc phải tự tìm đường nhiều hơn.',effect:{triTue:2},cultAction:'refuse_sect'},
+  {text:'Không tin và cắt đứt cuộc nói chuyện',result:'Bạn không muốn một người lạ can thiệp vào cuộc sống hiện tại.',effect:{},cultAction:'ignore_mystery'}
+ ]
+};
+
+function breakthroughEvent(cult:Cultivation):Event{
+ const realms=['Cảm Khí','Luyện Khí tầng 1','Luyện Khí tầng 2','Luyện Khí tầng 3','Trúc Cơ'];
+ const next=realms[Math.min(realms.length-1,cult.realm+1)];
+ return{
+  title:'Bình cảnh tu hành',
+  body:'Linh khí tích tụ đã chạm tới giới hạn của '+realms[cult.realm]+'. Nếu tiếp tục, bạn có thể thử đột phá lên '+next+' — nhưng nền tảng chưa chắc đã chịu nổi.',
+  min:0,max:120,
+  choices:[
+   {text:'Thử đột phá ngay',result:'Bạn gom toàn bộ linh khí và ép nó vượt qua bình cảnh.',effect:{},cultAction:'breakthrough'},
+   {text:'Củng cố căn cơ trước',result:'Bạn tạm gác cảnh giới để làm nền tảng vững hơn.',effect:{sucKhoe:2},cultAction:'stabilize'},
+   {text:'Không mạo hiểm lúc này',result:'Bạn giữ trạng thái hiện tại và tiếp tục sống cuộc đời thường ngày.',effect:{},cultAction:'delay_breakthrough'}
+  ]
+ }
+}
+
+const cultivationEvents:Event[]=[
+ {title:'Một đêm tĩnh tọa',body:'Sau một ngày rất bình thường, khi mọi người đã ngủ, bạn cảm thấy linh khí quanh mình rõ hơn thường lệ.',min:16,max:100,choices:[
+  {text:'Tĩnh tọa hấp thu linh khí',result:'Bạn dành nhiều giờ điều hòa hơi thở và dẫn khí.',effect:{sucKhoe:1},cultAction:'meditate'},
+  {text:'Dùng linh khí rèn cơ thể',result:'Bạn dẫn luồng khí mỏng qua cơ bắp và xương khớp.',effect:{theLuc:2},cultAction:'refine_body'},
+  {text:'Ghi lại cảm giác để nghiên cứu sau',result:'Bạn không vội tu luyện mà cố hiểu quy luật phía sau hiện tượng.',effect:{triTue:2},cultAction:'seek_clue'}
+ ]},
+ {title:'Chiếc chuông đồng ở chợ đồ cũ',body:'Một chiếc chuông nhỏ khiến đầu ngón tay bạn lạnh đi khi chạm vào. Người bán chỉ coi nó là đồ trang trí cũ.',min:18,max:90,choices:[
+  {text:'Mua và thử truyền linh khí vào',result:'Những hoa văn dưới lớp gỉ sáng lên trong vài giây.',effect:{taiSan:-3},cultAction:'inspect_relic'},
+  {text:'Hỏi nguồn gốc món đồ',result:'Bạn lần theo câu chuyện của những người từng sở hữu nó.',effect:{triTue:2},cultAction:'seek_clue'},
+  {text:'Không dây vào đồ lạ',result:'Bạn để chiếc chuông lại giữa hàng trăm món đồ cũ.',effect:{},cultAction:'ignore_mystery'}
+ ]},
+ {title:'Tiếng gõ trong căn phòng trống',body:'Một căn phòng khóa kín trong khu nhà vẫn phát ra ba tiếng gõ vào cùng một giờ mỗi đêm. Hàng xóm bắt đầu tránh đi qua hành lang đó.',min:18,max:90,choices:[
+  {text:'Dùng linh khí thử trấn áp',result:'Bạn đứng trước cánh cửa và thử dùng những gì đã học để ép luồng âm khí lùi lại.',effect:{sucKhoe:-2},cultAction:'seal_spirit'},
+  {text:'Đi theo dấu khí lạ để tìm nguyên nhân',result:'Bạn không đối đầu trực tiếp mà lần theo nguồn của hiện tượng.',effect:{triTue:2},cultAction:'follow_spirit'},
+  {text:'Không can thiệp',result:'Bạn quyết định bí ẩn này không đáng để đánh cược sức khỏe.',effect:{},cultAction:'avoid_spirit'}
+ ]},
+ {title:'Một khe đá có linh khí',body:'Trong chuyến đi ngắn ngoài thành phố, bạn phát hiện một khe đá có không khí lạnh bất thường. Cảm giác linh khí ở đây đậm hơn nhiều nơi khác.',min:20,max:100,choices:[
+  {text:'Ở lại tu luyện một đêm',result:'Bạn tận dụng nơi hiếm hoi có linh khí dày để tăng tốc tu hành.',effect:{sucKhoe:1},cultAction:'meditate'},
+  {text:'Tìm xem có cổ vật hay dấu tích nào không',result:'Bạn khám phá sâu hơn thay vì chỉ hấp thu linh khí.',effect:{triTue:2},cultAction:'inspect_relic'},
+  {text:'Ghi nhớ địa điểm rồi trở về',result:'Bạn không để việc tu hành phá hỏng kế hoạch hiện tại của cuộc sống.',effect:{},cultAction:'seek_clue'}
+ ]}
+];
+
 const roleEvents:Event[]=[
  {title:'Áp lực nơi làm việc',body:'Một dự án ở nơi làm việc gặp trục trặc. Đồng nghiệp đang chờ xem bạn phản ứng thế nào.',min:19,max:70,role:'employee',choices:[
   {text:'Nhận thêm trách nhiệm',result:'Bạn đứng ra xử lý phần việc khó.',effect:{danhTieng:4,sucKhoe:-2}},
@@ -180,6 +245,24 @@ const companyNames=['Mộc Phong','Bắc Minh','Hải Đăng','Tân Lộ','Thiê
 const clamp=(n:number)=>Math.max(0,Math.min(100,n));
 const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân'};
 
+
+
+const realmNames=['Cảm Khí','Luyện Khí tầng 1','Luyện Khí tầng 2','Luyện Khí tầng 3','Trúc Cơ'];
+const realmQi=[16,28,42,62,999];
+
+function createCultivation():Cultivation{
+ return{discovered:false,spiritRoot:'Chưa rõ',realm:0,qi:0,foundation:20,sect:null,arts:[],artifacts:[],mystery:0}
+}
+
+function addCultArt(c:Cultivation,id:string,name:string,kind:CultArt['kind']){
+ const found=c.arts.find(x=>x.id===id);
+ if(found)found.level=Math.min(5,found.level+1);
+ else c.arts.push({id,name,kind,level:1})
+}
+
+function addArtifact(c:Cultivation,id:string,name:string,grade:string,note:string){
+ if(!c.artifacts.some(x=>x.id===id))c.artifacts.push({id,name,grade,note})
+}
 
 function createWorld(seed:number):WorldState{
  const r=rng(seed+4049);
@@ -260,6 +343,7 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
   seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),
   martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
+  cultivation:createCultivation(),
   npcs:[
    {id:'me',name:'Mẹ',role:'Gia đình',relation:'Mẹ',bond:78,memory:'Người đã chăm sóc bạn từ thuở nhỏ.',alive:true},
    {id:'friend',name:['Huy','Mai','Tùng','Lan'][Math.floor(r()*4)],role:'Bạn thuở nhỏ',relation:'Bạn bè',bond:45,memory:'Hai người từng chia sẻ những ngày tuổi thơ.',alive:true}
@@ -286,35 +370,43 @@ function App(){
    if(!old.martial)old.martial={discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]};
    if(!old.martial.techniques)old.martial.techniques=[];
    if(!old.martial.grudges)old.martial.grudges=[];
+   if(!old.cultivation)old.cultivation=createCultivation();
+   if(!old.cultivation.arts)old.cultivation.arts=[];
+   if(!old.cultivation.artifacts)old.cultivation.artifacts=[];
    return old
   }catch{return fresh()}
  });
- const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'>('life');
+ const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'|'cultivation'>('life');
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState){
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation){
   if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
   if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
   const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
   if(dueGrudge)return revengeEvent(dueGrudge);
   if(age>=18&&roles.length===0)return careerEvent;
+  if(age>=20&&!flags.mystic_intro_seen&&world.supernatural>=4)return mysticIntroEvent;
+  if(cult.discovered&&!cult.sect&&cult.qi>=10&&!flags.sect_invite_seen)return sectInviteEvent;
+  if(cult.discovered&&cult.realm<realmNames.length-1&&cult.qi>=realmQi[cult.realm])return breakthroughEvent(cult);
 
   const active=roles.filter(x=>x.active).map(x=>x.id);
   if(active.includes('entrepreneur')&&company&&company.status!=='closed'&&age===19)return businessEvents[0];
   const profession=roleEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role));
   const business=company&&company.status!=='closed'?businessEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role)):[];
   const martialPool=martial.discovered?martialEvents.filter(e=>age>=e.min&&age<=e.max):[];
+  const cultivationPool=cult.discovered?cultivationEvents.filter(e=>age>=e.min&&age<=e.max):[];
   const generic=events.filter(e=>age>=e.min&&age<=e.max);
   const worldPool=worldEvents.filter(e=>age>=e.min&&age<=e.max&&((e.worldCondition==='weak_economy'&&world.economy<=42)||(e.worldCondition==='strong_economy'&&world.economy>=66)||(e.worldCondition==='tech_wave'&&world.technology>=58)));
   const r=rng(seed+turn*9973);
   let pool=[...generic,...profession,...worldPool];
   const roll=r();
-  if(business.length&&roll<.48)pool=[...business,...business,...generic,...martialPool];
-  else if(martialPool.length&&roll<.72)pool=[...martialPool,...martialPool,...generic,...profession];
-  else if(profession.length&&roll<.88)pool=[...profession,...profession,...generic];
-  else if(worldPool.length&&roll<.95)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool];
-  else pool=[...generic,...profession,...martialPool,...worldPool];
+  if(business.length&&roll<.42)pool=[...business,...business,...generic,...martialPool,...cultivationPool];
+  else if(cultivationPool.length&&roll<.64)pool=[...cultivationPool,...cultivationPool,...generic,...profession,...martialPool];
+  else if(martialPool.length&&roll<.78)pool=[...martialPool,...martialPool,...generic,...profession,...cultivationPool];
+  else if(profession.length&&roll<.89)pool=[...profession,...profession,...generic,...cultivationPool];
+  else if(worldPool.length&&roll<.96)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool,...cultivationPool];
+  else pool=[...generic,...profession,...martialPool,...cultivationPool,...worldPool];
   return pool[Math.floor(r()*pool.length)]||events[4]
  }
 
@@ -385,12 +477,60 @@ function App(){
   return{outcome:'loss',text:'Bạn thất thế. Thực chiến cho thấy sức mạnh hiện tại vẫn chưa đủ.'}
  }
 
+
+ function resolveCultivation(action:CultAction|undefined,cult:Cultivation,stats:Stats,world:WorldState,martial:Martial){
+  if(!action)return null;
+  const c=cult;
+  const r=rng(g.seed+g.turn*6151+world.year);
+
+  if(action==='ignore_mystery'){c.mystery=Math.max(0,c.mystery-1);return{outcome:'ignore',text:'Bạn để bí ẩn trôi qua và tiếp tục cuộc sống hiện tại.'}}
+  if(action==='awaken_breath'){
+   c.discovered=true;c.spiritRoot=c.spiritRoot==='Chưa rõ'?(['Mộc','Thủy','Kim','Hỏa','Thổ'][Math.floor(r()*5)]+' linh căn'):c.spiritRoot;c.qi+=8;c.foundation+=5;c.mystery+=4;
+   addCultArt(c,'breath_method','Dẫn Khí Quyết','method');world.supernatural=clamp(world.supernatural+2);
+   return{outcome:'discover',text:'Bạn cảm nhận được linh khí thật sự. '+c.spiritRoot+' của bạn bắt đầu phản ứng.'}
+  }
+  if(action==='inspect_relic'){
+   c.discovered=true;c.mystery+=7;c.qi+=4;addArtifact(c,'old_bell','Cổ Linh Chung','Không rõ','Chiếc chuông phản ứng với linh khí và đôi khi tự rung khi có khí lạ gần đó.');world.supernatural=clamp(world.supernatural+2);
+   return{outcome:'artifact',text:'Bạn xác nhận vật này không bình thường và giữ lại Cổ Linh Chung.'}
+  }
+  if(action==='meditate'){c.qi+=7+Math.floor(r()*5);c.foundation=clamp(c.foundation+2);addCultArt(c,'breath_method','Dẫn Khí Quyết','method');return{outcome:'train',text:'Linh khí tích tụ thêm trong cơ thể, chậm nhưng rõ ràng.'}}
+  if(action==='refine_body'){c.qi+=3;c.foundation=clamp(c.foundation+4);stats.theLuc=clamp(stats.theLuc+2);stats.sucKhoe=clamp(stats.sucKhoe+2);if(martial.discovered)martial.power=clamp(martial.power+2);addCultArt(c,'jade_body','Ngọc Cốt Pháp','body');return{outcome:'train',text:'Linh khí thấm vào cơ thể, khiến thể chất và võ đạo cùng được lợi.'}}
+  if(action==='seek_clue'){c.mystery+=5;stats.triTue=clamp(stats.triTue+1);return{outcome:'clue',text:'Bạn chưa mạnh hơn ngay, nhưng hiểu thêm một phần quy luật ẩn sau những hiện tượng lạ.'}}
+  if(action==='join_sect'){
+   c.discovered=true;c.sect='Ẩn Sơn Môn';c.qi+=6;c.foundation=clamp(c.foundation+8);addCultArt(c,'cloud_formula','Thanh Vân Tâm Pháp','method');
+   if(!world.organizations.some(o=>o.id==='hidden_sect'))world.organizations.push({id:'hidden_sect',name:'Ẩn Sơn Môn',kind:'Tu hành',power:61,wealth:35,influence:18,status:'Ẩn thế'});
+   return{outcome:'sect',text:'Bạn trở thành ngoại môn đệ tử của Ẩn Sơn Môn, nhưng cuộc sống ngoài thế tục vẫn tiếp tục.'}
+  }
+  if(action==='refuse_sect'){c.mystery+=3;c.foundation=clamp(c.foundation+2);return{outcome:'sect_refuse',text:'Bạn chọn con đường tán tu và giữ khoảng cách với tông môn.'}}
+  if(action==='stabilize'){c.foundation=clamp(c.foundation+10);c.qi=Math.max(0,c.qi-3);return{outcome:'stabilize',text:'Bạn dùng linh khí để củng cố kinh mạch thay vì chạy theo cảnh giới.'}}
+  if(action==='delay_breakthrough'){c.foundation=clamp(c.foundation+3);return{outcome:'delay',text:'Bạn giữ linh khí lại và chờ một thời điểm phù hợp hơn.'}}
+  if(action==='breakthrough'){
+   const chance=42+c.foundation*.45+stats.triTue*.12+c.arts.reduce((a,x)=>a+x.level*2,0);
+   const roll=r()*100;
+   if(roll<chance){
+    c.realm=Math.min(realmNames.length-1,c.realm+1);c.qi=Math.max(0,c.qi-Math.floor(realmQi[Math.max(0,c.realm-1)]*.72));c.foundation=clamp(c.foundation-8);stats.sucKhoe=clamp(stats.sucKhoe+5);world.supernatural=clamp(world.supernatural+1);
+    return{outcome:'breakthrough',text:'Bạn vượt qua bình cảnh và bước vào '+realmNames[c.realm]+'.'}
+   }
+   c.qi=Math.max(0,c.qi-7);c.foundation=clamp(c.foundation-5);stats.sucKhoe=clamp(stats.sucKhoe-7);
+   return{outcome:'failed_breakthrough',text:'Đột phá thất bại. Linh khí tán loạn khiến cơ thể bị phản phệ.'}
+  }
+  if(action==='seal_spirit'){
+   const power=c.qi+c.foundation*.4+c.realm*14+stats.triTue*.15+r()*16;
+   if(power>42){c.qi+=5;c.mystery+=6;addCultArt(c,'spirit_seal','Trấn Linh Ấn','spell');world.supernatural=clamp(world.supernatural-1);return{outcome:'seal',text:'Bạn trấn được luồng âm khí và lĩnh ngộ Trấn Linh Ấn.'}}
+   stats.sucKhoe=clamp(stats.sucKhoe-6);c.mystery+=3;return{outcome:'seal_fail',text:'Âm khí phản chấn khiến bạn bị thương trước khi hiện tượng tạm lắng xuống.'}
+  }
+  if(action==='follow_spirit'){c.mystery+=8;c.qi+=3;addArtifact(c,'yin_shard','Mảnh Âm Ngọc','Phàm phẩm','Một mảnh ngọc lạnh tìm thấy ở nguồn của hiện tượng linh dị.');return{outcome:'occult',text:'Bạn lần ra nguồn dị tượng và nhặt được một Mảnh Âm Ngọc.'}}
+  if(action==='avoid_spirit'){return{outcome:'avoid',text:'Bạn tránh xa hiện tượng linh dị và không để nó cuốn cuộc sống mình đi quá xa.'}}
+  return null
+ }
+
  function choose(c:Choice){
   if(g.dead)return;
   const age=g.age+1,s={...g.stats},roles=(g.roles||[]).map((x:Role)=>({...x})),npcs=(g.npcs||[]).map((n:NPC)=>({...n}));
   let company=g.company?{...g.company}:null;
   const world:WorldState={...(g.world||createWorld(g.seed)),organizations:(g.world?.organizations||createWorld(g.seed).organizations).map((o:Organization)=>({...o})),news:[...(g.world?.news||[])]};
   const martial:Martial={...(g.martial||{discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]}),techniques:(g.martial?.techniques||[]).map((x:Technique)=>({...x})),grudges:(g.martial?.grudges||[]).map((x:Grudge)=>({...x}))};
+  const cultivation:Cultivation={...(g.cultivation||createCultivation()),arts:(g.cultivation?.arts||[]).map((x:CultArt)=>({...x})),artifacts:(g.cultivation?.artifacts||[]).map((x:Artifact)=>({...x}))};
   let flags={...(g.flags||{})};
 
   if(c.role&&!roles.some((x:Role)=>x.id===c.role)){
@@ -404,6 +544,7 @@ function App(){
 
   for(const[k,v]of Object.entries(c.effect))s[k as keyof Stats]=clamp(s[k as keyof Stats]+(v||0));
   const martialResult=resolveMartial(c.martialAction,g.current,martial,s);
+  const cultResult=resolveCultivation(c.cultAction,cultivation,s,world,martial);
   company=applyBusiness(c.businessAction,company,s);
 
   if(c.worldAction==='invest'){
@@ -412,12 +553,16 @@ function App(){
   }
   if(c.worldAction==='network'&&company)company.reputation=clamp(company.reputation+3);
   if(c.worldAction==='save'&&company)company.cash=clamp(company.cash+3);
-  s.sucKhoe=clamp(s.sucKhoe-(age>55?2:age>30?1:0));
+  const aging=cultivation.realm>=4?(age>80?1:0):cultivation.realm>=2?(age>60?1:age>35?1:0):(age>55?2:age>30?1:0);
+  s.sucKhoe=clamp(s.sucKhoe-aging);
 
-  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':'event'}as Log];
+  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':c.cultAction?'cultivation':'event'}as Log];
   if(martialResult)logs.push({age:g.age,text:'Võ đạo — '+martialResult.text,kind:'combat'});
+  if(cultResult)logs.push({age:g.age,text:'Tu tiên / Huyền bí — '+cultResult.text,kind:'cultivation'});
 
   if(g.current===martialIntroEvent)flags.martial_intro_seen=true;
+  if(g.current.title==='Cuốn sổ không có chữ')flags.mystic_intro_seen=true;
+  if(g.current.title==='Người khách biết tên bạn')flags.sect_invite_seen=true;
   if(g.current.title==='Lời thách đấu đầu tiên'){
    flags.martial_first_duel_done=true;
    let rival=npcs.find((n:NPC)=>n.id==='martial_rival');
@@ -480,15 +625,16 @@ function App(){
   }
 
   advanceWorld(world,g.seed,age,company,npcs,roles);
-  const dead=s.sucKhoe<=0||age>=82+(g.seed%17);
+  const lifespanBonus=cultivation.realm>=4?30:cultivation.realm>=3?16:cultivation.realm>=2?8:0;
+  const dead=s.sucKhoe<=0||age>=82+(g.seed%17)+lifespanBonus;
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world)})
+  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.7</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.8</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
@@ -501,9 +647,23 @@ function App(){
    {g.company&&<button className={tab==='business'?'active':''} onClick={()=>setTab('business')}>Doanh nghiệp</button>}
    {g.martial?.discovered&&<button className={tab==='martial'?'active':''} onClick={()=>setTab('martial')}>Võ đạo <i>{g.martial.techniques.length}</i></button>}
    <button className={tab==='world'?'active':''} onClick={()=>setTab('world')}>Thế giới</button>
+   {g.cultivation?.discovered&&<button className={tab==='cultivation'?'active':''} onClick={()=>setTab('cultivation')}>Tu tiên <i>{g.cultivation.realm+1}</i></button>}
   </nav>
 
-  {tab==='world'?<section className="history world">
+  {tab==='cultivation'&&g.cultivation?.discovered?<section className="history cultivation">
+   <div className="historyHead"><div><span className="chapter">TU TIÊN / HUYỀN BÍ</span><h2>{realmNames[g.cultivation.realm]}</h2></div><span>{g.cultivation.sect||'Tán tu'}</span></div>
+   <div className="cultStats">
+    <div><span>Linh khí</span><b>{g.cultivation.qi}</b><i><em style={{width:Math.min(100,g.cultivation.qi)+'%'}}/></i></div>
+    <div><span>Căn cơ</span><b>{g.cultivation.foundation}</b><i><em style={{width:g.cultivation.foundation+'%'}}/></i></div>
+    <div><span>Linh căn</span><b>{g.cultivation.spiritRoot}</b></div>
+    <div><span>Huyền bí</span><b>{g.cultivation.mystery}</b></div>
+   </div>
+   <div className="cultColumns">
+    <div><h3>Công pháp</h3><div className="cultList">{g.cultivation.arts.length?g.cultivation.arts.map((a:CultArt)=><article key={a.id}><strong>{a.name}</strong><span>{a.kind==='method'?'Tâm pháp':a.kind==='spell'?'Thuật pháp':'Luyện thể'} · Cấp {a.level}/5</span></article>):<p>Chưa có công pháp thành hình.</p>}</div></div>
+    <div><h3>Cổ vật</h3><div className="cultList">{g.cultivation.artifacts.length?g.cultivation.artifacts.map((a:Artifact)=><article key={a.id}><strong>{a.name}</strong><span>{a.grade}</span><p>{a.note}</p></article>):<p>Chưa có cổ vật.</p>}</div></div>
+   </div>
+   <div className="cultNote"><b>{g.cultivation.sect?'Tông môn: '+g.cultivation.sect:'Bạn đang tự tìm đường giữa thế tục.'}</b><p>Tu hành không thay thế nghề nghiệp, gia đình hay cuộc sống thường ngày. Nó chỉ mở thêm một tầng nhân sinh có thể va chạm với mọi hệ thống khác.</p></div>
+  </section>:tab==='world'?<section className="history world">
    <div className="historyHead"><div><span className="chapter">THẾ GIỚI KHÔNG CHỜ BẠN</span><h2>Năm {g.world.year}</h2></div><span>Tuổi của bạn: {g.age}</span></div>
    <div className="worldStats">
     <div><span>Kinh tế</span><b>{g.world.economy}</b><i><em style={{width:g.world.economy+'%'}}/></i></div>
@@ -551,7 +711,7 @@ function App(){
    </>}
   </section>:<section className="history">
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
-   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}</div></article>)}</div>
+   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}</div></article>)}</div>
   </section>}
   <footer>Tự động lưu trên thiết bị</footer>
  </main>
