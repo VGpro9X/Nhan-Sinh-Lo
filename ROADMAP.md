@@ -8,8 +8,8 @@ Canonical detail: [MASTER_PLAN.md](./MASTER_PLAN.md)
 - [x] V0.1 First Life Prototype — **USER APPROVED**
 - [x] V0.2 Nhân → Quả — **USER APPROVED**
 - [x] V0.3 NPC & Quan hệ — **USER APPROVED**
-- [x] V0.4 Nghề nghiệp không phải Class — **AWAITING USER TEST**
-- [ ] V0.5 Doanh nhân & Thương Chiến
+- [x] V0.4 Nghề nghiệp không phải Class — **USER APPROVED**
+- [x] V0.5 Doanh nhân & Thương Chiến — **AWAITING USER TEST**
 - [ ] V0.6 Xung đột & Võ đạo
 - [ ] V0.7 World Simulation
 - [ ] V0.8 Tu tiên / Huyền bí
