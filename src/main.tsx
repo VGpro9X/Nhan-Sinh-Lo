@@ -3,25 +3,83 @@ import{createRoot}from'react-dom/client';
 import'./style.css';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
-type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'};
+type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'};
 type Seed={id:string;createdAge:number;dueAge:number;label:string;resolved:boolean};
 type NPC={id:string;name:string;role:string;relation:string;bond:number;memory:string;alive:boolean};
 type Role={id:string;name:string;since:number;active:boolean;level:number};
 type Company={name:string;foundedAge:number;cash:number;market:number;reputation:number;staff:number;rivalPressure:number;status:'active'|'distressed'|'closed'};
+type Technique={id:string;name:string;level:number;kind:'attack'|'defense'|'movement'};
+type Grudge={npcId:string;level:number;reason:string;dueAge:number;active:boolean};
+type Martial={discovered:boolean;power:number;experience:number;wounds:number;techniques:Technique[];grudges:Grudge[]};
 type BusinessAction='price_war'|'quality'|'supplier'|'retain_staff'|'promote_staff'|'lose_staff'|'expand'|'reserve'|'fight_rival_son'|'legal_response'|'walk_away';
-type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction};
-type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string};
+type MartialAction='learn_fist'|'learn_step'|'train_fist'|'train_guard'|'train_step'|'strike'|'guard'|'evade'|'deescalate';
+type CombatSpec={id:string;name:string;power:number;grudgeId?:string};
+type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction};
+type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec};
 
 const careerEvent:Event={
  title:'Ngã rẽ trưởng thành',
  body:'Bạn bắt đầu phải tự định hình cách kiếm sống. Không lựa chọn nào buộc bạn phải đi theo nó cả đời.',
- min:18,max:18,
+ min:18,max:100,
  choices:[
   {text:'Tìm một công việc ổn định',result:'Bạn bước vào môi trường công sở và học cách sống bằng nghề nghiệp ổn định.',effect:{taiSan:5},role:'employee'},
   {text:'Theo đuổi học thuật và nghiên cứu',result:'Bạn chọn con đường cần nhiều tri thức và kiên nhẫn.',effect:{triTue:5,taiSan:-2},role:'researcher'},
   {text:'Tự kiếm sống bằng kỹ năng của mình',result:'Bạn chọn cuộc sống tự do hơn, đổi lại là nhiều bất định.',effect:{danhTieng:2},role:'freelancer'},
   {text:'Thử gây dựng việc kinh doanh riêng',result:'Bạn gom vốn, tìm khách hàng đầu tiên và bước vào một cuộc chơi nhiều cơ hội lẫn rủi ro.',effect:{taiSan:-5,triTue:2},role:'entrepreneur'}
  ]};
+
+const martialIntroEvent:Event={
+ title:'Ông lão tập quyền bên hồ',
+ body:'Một buổi sáng, bạn thấy một ông lão tập những động tác chậm nhưng nặng như đá. Ông nhìn bạn rồi hỏi: “Muốn thử không?”',
+ min:14,max:14,
+ choices:[
+  {text:'Xin học một bài quyền căn bản',result:'Bạn vụng về lặp lại từng thế quyền cho đến khi cánh tay mỏi nhừ.',effect:{theLuc:3},martialAction:'learn_fist'},
+  {text:'Chú ý cách ông di chuyển',result:'Bạn không học quyền, chỉ quan sát cách bàn chân đổi hướng và giữ thăng bằng.',effect:{triTue:2},martialAction:'learn_step'},
+  {text:'Cảm ơn rồi tiếp tục cuộc sống',result:'Bạn bỏ qua một cánh cửa nhỏ mà không biết nó sẽ dẫn tới đâu.',effect:{}}
+ ]};
+
+const firstDuelEvent:Event={
+ title:'Lời thách đấu đầu tiên',
+ body:'Khải, một thiếu niên thường tập võ gần khu phố, nghe chuyện bạn từng học vài chiêu và cố tình chặn đường. Cậu ta muốn phân thắng bại.',
+ min:15,max:70,
+ combat:{id:'martial_rival',name:'Khải',power:34,grudgeId:'martial_rival'},
+ choices:[
+  {text:'Đối mặt và ra đòn trước',result:'Bạn chấp nhận cuộc đối đầu.',effect:{},martialAction:'strike'},
+  {text:'Giữ thế, chờ đối phương sơ hở',result:'Bạn không vội tấn công mà tập trung bảo vệ mình.',effect:{},martialAction:'guard'},
+  {text:'Cố gắng hạ nhiệt chuyện này',result:'Bạn không muốn một lời thách thức nhỏ biến thành ân oán dài lâu.',effect:{triTue:1},martialAction:'deescalate'}
+ ]};
+
+const martialEvents:Event[]=[
+ {title:'Buổi tập dưới mưa',body:'Bạn có một buổi tối rảnh. Cơ thể mỏi mệt nhưng đây là lúc tốt để mài giũa thứ mình đã học.',min:15,max:75,choices:[
+  {text:'Luyện quyền đến khi tay run',result:'Bạn lặp đi lặp lại những đòn đánh cơ bản.',effect:{theLuc:2},martialAction:'train_fist'},
+  {text:'Luyện thủ và chịu va chạm',result:'Bạn tập cách đứng vững khi bị ép lùi.',effect:{sucKhoe:-1,theLuc:2},martialAction:'train_guard'},
+  {text:'Luyện bộ pháp và né tránh',result:'Bạn dành phần lớn thời gian để di chuyển thay vì ra đòn.',effect:{triTue:1,theLuc:1},martialAction:'train_step'}
+ ]},
+ {title:'Một vụ cướp giữa đường',body:'Một kẻ cầm dao giật túi của người đi đường rồi lao qua trước mặt bạn. Khoảnh khắc quyết định chỉ kéo dài vài giây.',min:16,max:70,combat:{id:'street_thug',name:'Kẻ cướp',power:38},choices:[
+  {text:'Chặn đường và đánh ngã hắn',result:'Bạn lao vào trước khi kẻ cướp kịp chạy xa.',effect:{danhTieng:2},martialAction:'strike'},
+  {text:'Giữ khoảng cách, ép hắn bỏ dao',result:'Bạn ưu tiên an toàn thay vì cố hạ đối phương thật nhanh.',effect:{danhTieng:1},martialAction:'guard'},
+  {text:'Bám theo, chờ thời cơ khống chế',result:'Bạn dùng khoảng cách và địa hình để tránh đối đầu trực diện.',effect:{triTue:2},martialAction:'evade'}
+ ]},
+ {title:'Một lời mời tỷ thí',body:'Một người tập võ nghe về bạn và đề nghị giao đấu kín, không tiền thưởng, không khán giả — chỉ để biết ai hơn ai.',min:18,max:70,combat:{id:'sparring_guest',name:'Người tập võ lạ',power:46},choices:[
+  {text:'Nhận lời và đánh áp đảo',result:'Bạn muốn thử giới hạn thực chiến của mình.',effect:{},martialAction:'strike'},
+  {text:'Nhận lời nhưng thiên về phòng thủ',result:'Bạn coi đây là cơ hội học cách đọc đối thủ.',effect:{triTue:1},martialAction:'guard'},
+  {text:'Từ chối giao đấu',result:'Bạn không thấy cần phải chứng minh điều gì hôm nay.',effect:{sucKhoe:1}}
+ ]}
+];
+
+function revengeEvent(grudge:Grudge):Event{
+ return{
+  title:'Ân oán quay lại',
+  body:'Khải xuất hiện sau nhiều năm. Chuyện cũ chưa hề biến mất với cậu ta. Lần này, cả hai đều đã khác trước.',
+  min:0,max:100,
+  combat:{id:'martial_rival_return',name:'Khải',power:42+Math.floor(grudge.level/3),grudgeId:'martial_rival'},
+  choices:[
+   {text:'Giải quyết bằng một trận cuối',result:'Bạn chấp nhận rằng có những ân oán chỉ kết thúc sau khi một bên chịu dừng.',effect:{},martialAction:'strike'},
+   {text:'Đánh chắc, không để cơn giận dẫn đường',result:'Bạn giữ đầu óc tỉnh táo dù đối thủ liên tục khiêu khích.',effect:{triTue:1},martialAction:'guard'},
+   {text:'Nói thẳng để chấm dứt ân oán',result:'Bạn thử kết thúc chuyện cũ mà không cần thêm thương tích.',effect:{},martialAction:'deescalate'}
+  ]
+ }
+}
 
 const roleEvents:Event[]=[
  {title:'Áp lực nơi làm việc',body:'Một dự án ở nơi làm việc gặp trục trặc. Đồng nghiệp đang chờ xem bạn phản ứng thế nào.',min:19,max:70,role:'employee',choices:[
@@ -57,8 +115,8 @@ const businessEvents:Event[]=[
   {text:'Giữ tiền mặt, quan sát thêm',result:'Bạn bỏ qua cơ hội trước mắt để giữ sức cho biến động tiếp theo.',effect:{triTue:2},businessAction:'reserve'},
   {text:'Rủ đối tác cùng tham gia',result:'Bạn chia lợi ích để giảm rủi ro và mở rộng mạng lưới.',effect:{danhTieng:3},businessAction:'supplier'}
  ]},
- {title:'Chuyện ngoài thương trường',body:'Sau một buổi đàm phán căng thẳng, bạn bắt gặp con trai của đối thủ đang hành hung một người bán hàng già bên đường. Đây không phải chuyện kinh doanh.',min:22,max:70,role:'entrepreneur',choices:[
-  {text:'Trực tiếp lao vào can ngăn',result:'Bạn đánh nhau ngay giữa đường. Người bán hàng được cứu, nhưng video nhanh chóng lan lên mạng.',effect:{theLuc:-4,danhTieng:2},businessAction:'fight_rival_son',seed:{id:'viral_ceo_fight',label:'Đoạn video bên đường',delay:2}},
+ {title:'Chuyện ngoài thương trường',body:'Sau một buổi đàm phán căng thẳng, bạn bắt gặp con trai của đối thủ đang hành hung một người bán hàng già bên đường. Đây không phải chuyện kinh doanh.',min:22,max:70,role:'entrepreneur',combat:{id:'rival_son',name:'Con trai đối thủ',power:43},choices:[
+  {text:'Trực tiếp lao vào can ngăn',result:'Bạn đánh nhau ngay giữa đường. Người bán hàng được cứu, nhưng video nhanh chóng lan lên mạng.',effect:{danhTieng:2},businessAction:'fight_rival_son',martialAction:'strike',seed:{id:'viral_ceo_fight',label:'Đoạn video bên đường',delay:2}},
   {text:'Gọi công an và giữ bằng chứng',result:'Bạn chọn cách ít bốc đồng hơn nhưng vẫn đứng ra bảo vệ người yếu thế.',effect:{triTue:2,danhTieng:2},businessAction:'legal_response'},
   {text:'Rời đi để tránh kéo công ty vào rắc rối',result:'Bạn bước đi, nhưng hình ảnh người bán hàng vẫn ở lại trong đầu.',effect:{},businessAction:'walk_away'}
  ]}
@@ -96,6 +154,13 @@ function rng(seed:number){let t=seed+0x6D2B79F5;return()=>{t=Math.imul(t^t>>>15,
 const names=['An','Minh','Lâm','Khánh','Hạ','Vy','Nam','Phong','Linh','Nguyên'];
 const companyNames=['Mộc Phong','Bắc Minh','Hải Đăng','Tân Lộ','Thiên Hà','Minh Việt'];
 const clamp=(n:number)=>Math.max(0,Math.min(100,n));
+const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân'};
+
+function addOrLevelTechnique(m:Martial,id:string,name:string,kind:Technique['kind']){
+ const found=m.techniques.find(x=>x.id===id);
+ if(found)found.level=Math.min(5,found.level+1);
+ else m.techniques.push({id,name,kind,level:1});
+}
 
 function fresh(seed=Math.floor(Math.random()*99999999)){
  const r=rng(seed);
@@ -104,6 +169,7 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   stats:{sucKhoe:80+Math.floor(r()*16),triTue:25+Math.floor(r()*31),theLuc:25+Math.floor(r()*31),danhTieng:0,taiSan:10},
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
   seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,
+  martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
   npcs:[
    {id:'me',name:'Mẹ',role:'Gia đình',relation:'Mẹ',bond:78,memory:'Người đã chăm sóc bạn từ thuở nhỏ.',alive:true},
    {id:'friend',name:['Huy','Mai','Tùng','Lan'][Math.floor(r()*4)],role:'Bạn thuở nhỏ',relation:'Bạn bè',bond:45,memory:'Hai người từng chia sẻ những ngày tuổi thơ.',alive:true}
@@ -115,7 +181,6 @@ type Game=ReturnType<typeof fresh>;
 const KEY='nhan-sinh-lo-v01';
 const labels:any={sucKhoe:'Sức khỏe',triTue:'Trí tuệ',theLuc:'Thể lực',danhTieng:'Danh tiếng',taiSan:'Tài sản'};
 const icons:any={sucKhoe:'♥',triTue:'◆',theLuc:'⚔',danhTieng:'★',taiSan:'●'};
-const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân'};
 
 function App(){
  const[g,setG]=useState<Game>(()=>{
@@ -125,24 +190,36 @@ function App(){
    if(!old.npcs){const base=fresh(old.seed);old.npcs=base.npcs}
    if(!old.roles)old.roles=[];
    if(old.company===undefined)old.company=null;
+   if(!old.martial)old.martial={discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]};
+   if(!old.martial.techniques)old.martial.techniques=[];
+   if(!old.martial.grudges)old.martial.grudges=[];
    return old
   }catch{return fresh()}
  });
- const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'>('life');
+ const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'>('life');
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null){
-  if(age===18&&roles.length===0)return careerEvent;
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={}){
+  if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
+  if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
+  const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
+  if(dueGrudge)return revengeEvent(dueGrudge);
+  if(age>=18&&roles.length===0)return careerEvent;
+
   const active=roles.filter(x=>x.active).map(x=>x.id);
   if(active.includes('entrepreneur')&&company&&company.status!=='closed'&&age===19)return businessEvents[0];
   const profession=roleEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role));
   const business=company&&company.status!=='closed'?businessEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role)):[];
+  const martialPool=martial.discovered?martialEvents.filter(e=>age>=e.min&&age<=e.max):[];
   const generic=events.filter(e=>age>=e.min&&age<=e.max);
   const r=rng(seed+turn*9973);
   let pool=[...generic,...profession];
-  if(business.length&&r()<.58)pool=[...business,...business,...generic];
-  else if(profession.length&&r()<.42)pool=[...profession,...profession,...generic];
+  const roll=r();
+  if(business.length&&roll<.48)pool=[...business,...business,...generic,...martialPool];
+  else if(martialPool.length&&roll<.72)pool=[...martialPool,...martialPool,...generic,...profession];
+  else if(profession.length&&roll<.88)pool=[...profession,...profession,...generic];
+  else pool=[...generic,...profession,...martialPool];
   return pool[Math.floor(r()*pool.length)]||events[4]
  }
 
@@ -157,7 +234,7 @@ function App(){
   if(action==='lose_staff'){c.staff-=12;c.cash+=3}
   if(action==='expand'){c.cash-=15;c.market+=14;c.staff+=8;c.rivalPressure+=5}
   if(action==='reserve'){c.cash+=5;c.rivalPressure-=3}
-  if(action==='fight_rival_son'){c.reputation-=12;c.cash-=6;c.rivalPressure+=18;stats.danhTieng=clamp(stats.danhTieng-4)}
+  if(action==='fight_rival_son'){c.reputation-=9;c.cash-=5;c.rivalPressure+=16;stats.danhTieng=clamp(stats.danhTieng-3)}
   if(action==='legal_response'){c.reputation+=7;c.rivalPressure-=5}
   if(action==='walk_away'){c.reputation-=2}
   c.cash=clamp(c.cash);c.market=clamp(c.market);c.reputation=clamp(c.reputation);c.staff=clamp(c.staff);c.rivalPressure=clamp(c.rivalPressure);
@@ -165,10 +242,61 @@ function App(){
   return c
  }
 
+ function resolveMartial(action:MartialAction|undefined,event:Event,martial:Martial,stats:Stats){
+  if(!action)return null;
+  const m=martial;
+  if(action==='learn_fist'){
+   m.discovered=true;m.power=clamp(m.power+9);m.experience+=5;addOrLevelTechnique(m,'basic_fist','Căn Bản Quyền','attack');
+   return{outcome:'learn',text:'Bạn chính thức bước chân vào võ đạo với Căn Bản Quyền.'}
+  }
+  if(action==='learn_step'){
+   m.discovered=true;m.power=clamp(m.power+7);m.experience+=5;addOrLevelTechnique(m,'flow_step','Lưu Bộ','movement');
+   return{outcome:'learn',text:'Bạn ghi nhớ Lưu Bộ — cách di chuyển giúp mình không đứng yên trước sức mạnh.'}
+  }
+  if(action==='train_fist'){m.discovered=true;m.power=clamp(m.power+4);m.experience+=6;addOrLevelTechnique(m,'basic_fist','Căn Bản Quyền','attack');return{outcome:'train',text:'Quyền pháp của bạn gọn hơn và nặng hơn.'}}
+  if(action==='train_guard'){m.discovered=true;m.power=clamp(m.power+3);m.experience+=6;addOrLevelTechnique(m,'iron_guard','Thiết Thủ','defense');return{outcome:'train',text:'Bạn học cách chịu lực và giữ thế khi bị ép.'}}
+  if(action==='train_step'){m.discovered=true;m.power=clamp(m.power+3);m.experience+=6;addOrLevelTechnique(m,'flow_step','Lưu Bộ','movement');return{outcome:'train',text:'Bộ pháp của bạn linh hoạt hơn sau hàng trăm lần đổi hướng.'}}
+  if(!event.combat)return null;
+
+  m.discovered=true;
+  const atk=m.techniques.filter(x=>x.kind==='attack').reduce((a,x)=>a+x.level*3,0);
+  const def=m.techniques.filter(x=>x.kind==='defense').reduce((a,x)=>a+x.level*3,0);
+  const move=m.techniques.filter(x=>x.kind==='movement').reduce((a,x)=>a+x.level*3,0);
+  const r=rng(g.seed+g.turn*7919+event.combat.power);
+  let player=m.power+stats.theLuc*.34+stats.triTue*.10+r()*18;
+  let enemy=event.combat.power+r()*16;
+  if(action==='strike')player+=8+atk;
+  if(action==='guard')player+=4+def+stats.triTue*.06;
+  if(action==='evade')player+=3+move+stats.triTue*.12;
+
+  if(action==='deescalate'){
+   const social=stats.triTue*.55+stats.danhTieng*.45+m.experience*.15+r()*20;
+   const threshold=event.combat.power*.9+18;
+   if(social>=threshold){m.experience+=2;return{outcome:'peace',text:'Bạn khiến căng thẳng hạ xuống trước khi có thêm người bị thương.'}}
+   stats.sucKhoe=clamp(stats.sucKhoe-4);m.wounds+=1;m.experience+=3;
+   return{outcome:'failed_peace',text:'Lời nói không đủ. Cuộc xô xát vẫn nổ ra và bạn chịu một vết thương nhẹ.'}
+  }
+
+  const diff=player-enemy;
+  if(diff>=8){
+   m.experience+=10;m.power=clamp(m.power+3);stats.danhTieng=clamp(stats.danhTieng+2);
+   return{outcome:'win',text:'Bạn thắng thế trong cuộc đối đầu nhờ năng lực và lựa chọn chiến thuật của mình.'}
+  }
+  if(diff>-8){
+   m.experience+=7;m.power=clamp(m.power+2);stats.sucKhoe=clamp(stats.sucKhoe-4);m.wounds+=1;
+   return{outcome:'draw',text:'Không ai thật sự áp đảo. Bạn rời cuộc đối đầu với thương tích nhưng cũng hiểu mình hơn.'}
+  }
+  m.experience+=5;stats.sucKhoe=clamp(stats.sucKhoe-(action==='guard'?6:10));m.wounds+=1;
+  return{outcome:'loss',text:'Bạn thất thế. Thực chiến cho thấy sức mạnh hiện tại vẫn chưa đủ.'}
+ }
+
  function choose(c:Choice){
   if(g.dead)return;
   const age=g.age+1,s={...g.stats},roles=(g.roles||[]).map((x:Role)=>({...x})),npcs=(g.npcs||[]).map((n:NPC)=>({...n}));
   let company=g.company?{...g.company}:null;
+  const martial:Martial={...(g.martial||{discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]}),techniques:(g.martial?.techniques||[]).map((x:Technique)=>({...x})),grudges:(g.martial?.grudges||[]).map((x:Grudge)=>({...x}))};
+  let flags={...(g.flags||{})};
+
   if(c.role&&!roles.some((x:Role)=>x.id===c.role)){
    roles.push({id:c.role,name:roleNames[c.role],since:g.age,active:true,level:1});
    if(c.role==='entrepreneur'){
@@ -177,11 +305,40 @@ function App(){
     if(!npcs.some((n:NPC)=>n.id==='business_rival'))npcs.push({id:'business_rival',name:['Quang','Vũ','Đức','Sơn'][Math.floor(r()*4)],role:'Chủ doanh nghiệp đối thủ',relation:'Đối thủ',bond:12,memory:'Hai bên bắt đầu cạnh tranh cùng một nhóm khách hàng.',alive:true})
    }
   }
+
   for(const[k,v]of Object.entries(c.effect))s[k as keyof Stats]=clamp(s[k as keyof Stats]+(v||0));
+  const martialResult=resolveMartial(c.martialAction,g.current,martial,s);
   company=applyBusiness(c.businessAction,company,s);
   s.sucKhoe=clamp(s.sucKhoe-(age>55?2:age>30?1:0));
 
-  let seeds=[...(g.seeds||[])],flags={...(g.flags||{})},logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':'event'}as Log];
+  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':'event'}as Log];
+  if(martialResult)logs.push({age:g.age,text:'Võ đạo — '+martialResult.text,kind:'combat'});
+
+  if(g.current===martialIntroEvent)flags.martial_intro_seen=true;
+  if(g.current.title==='Lời thách đấu đầu tiên'){
+   flags.martial_first_duel_done=true;
+   let rival=npcs.find((n:NPC)=>n.id==='martial_rival');
+   if(!rival){
+    rival={id:'martial_rival',name:'Khải',role:'Người tập võ',relation:'Kình địch',bond:5,memory:'Một lời thách đấu tuổi trẻ đã biến hai người thành đối thủ.',alive:true};
+    npcs.push(rival)
+   }
+   const harsh=c.martialAction!=='deescalate';
+   rival.bond=harsh?0:12;
+   rival.memory=harsh?'Trận đấu đầu tiên để lại lòng hiếu thắng và một ân oán chưa dứt.':'Bạn từng cố dừng cuộc đối đầu trước khi nó trở thành thù hận.';
+   const existing=martial.grudges.find(x=>x.npcId==='martial_rival');
+   if(existing){existing.active=true;existing.level=harsh?45:22;existing.dueAge=age+4}
+   else martial.grudges.push({npcId:'martial_rival',level:harsh?45:22,reason:'Lời thách đấu tuổi trẻ',dueAge:age+4,active:true})
+  }
+
+  if(g.current.title==='Ân oán quay lại'){
+   const grudge=martial.grudges.find(x=>x.npcId==='martial_rival'&&x.active);
+   const rival=npcs.find((n:NPC)=>n.id==='martial_rival');
+   if(grudge){
+    if(martialResult?.outcome==='peace'||martialResult?.outcome==='win'){grudge.active=false;grudge.level=Math.max(0,grudge.level-30);if(rival){rival.relation='Cựu kình địch';rival.bond=25;rival.memory='Ân oán cũ cuối cùng đã được khép lại.'}}
+    else{grudge.level=clamp(grudge.level+15);grudge.dueAge=age+3;if(rival)rival.memory='Cuộc tái ngộ khiến ân oán càng sâu hơn.'}
+   }
+  }
+
   if(c.seed&&!flags[c.seed.id]){
    seeds.push({id:c.seed.id,createdAge:g.age,dueAge:g.age+c.seed.delay,label:c.seed.label,resolved:false});
    flags[c.seed.id]=true
@@ -212,19 +369,22 @@ function App(){
   }
   if(g.current.title==='Chuyện ngoài thương trường'){
    const rival=npcs.find((n:NPC)=>n.id==='business_rival');
-   if(rival&&c.businessAction==='fight_rival_son'){rival.bond=0;rival.memory='Sau vụ ẩu đả liên quan tới con trai họ, cạnh tranh đã biến thành thù địch cá nhân.'}
+   if(rival&&c.businessAction==='fight_rival_son'){
+    rival.bond=0;
+    rival.memory=martialResult?.outcome==='win'?'Bạn đánh bại con trai họ giữa phố; thương chiến đã biến thành thù địch cá nhân.':'Vụ ẩu đả liên quan tới con trai họ khiến cạnh tranh biến thành thù địch cá nhân.'
+   }
    if(rival&&c.businessAction==='legal_response'){rival.bond=clamp(rival.bond-5);rival.memory='Bạn từng khiến gia đình họ vướng vào một vụ việc pháp lý, nhưng không trực tiếp dùng bạo lực.'}
   }
 
   const dead=s.sucKhoe<=0||age>=82+(g.seed%17);
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company)})
+  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.5</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.6</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
@@ -235,9 +395,21 @@ function App(){
    <button className={tab==='relations'?'active':''} onClick={()=>setTab('relations')}>Quan hệ <i>{(g.npcs||[]).length}</i></button>
    <button className={tab==='roles'?'active':''} onClick={()=>setTab('roles')}>Vai trò <i>{(g.roles||[]).length}</i></button>
    {g.company&&<button className={tab==='business'?'active':''} onClick={()=>setTab('business')}>Doanh nghiệp</button>}
+   {g.martial?.discovered&&<button className={tab==='martial'?'active':''} onClick={()=>setTab('martial')}>Võ đạo <i>{g.martial.techniques.length}</i></button>}
   </nav>
 
-  {tab==='business'&&g.company?<section className="history business">
+  {tab==='martial'&&g.martial?.discovered?<section className="history martial">
+   <div className="historyHead"><div><span className="chapter">XUNG ĐỘT & VÕ ĐẠO</span><h2>Võ đạo của {g.name}</h2></div><span>Kinh nghiệm {g.martial.experience}</span></div>
+   <div className="martialStats">
+    <div><span>Thực lực</span><b>{g.martial.power}</b></div>
+    <div><span>Kinh nghiệm</span><b>{g.martial.experience}</b></div>
+    <div><span>Thương tích</span><b>{g.martial.wounds}</b></div>
+    <div><span>Ân oán</span><b>{g.martial.grudges.filter((x:Grudge)=>x.active).length}</b></div>
+   </div>
+   <h3>Kỹ năng đã học</h3>
+   <div className="techList">{g.martial.techniques.length?g.martial.techniques.map((t:Technique)=><article key={t.id}><strong>{t.name}</strong><span>{t.kind==='attack'?'Tấn công':t.kind==='defense'?'Phòng thủ':'Bộ pháp'} · Cấp {t.level}/5</span></article>):<p>Chưa có kỹ năng thành hình.</p>}</div>
+   {g.martial.grudges.some((x:Grudge)=>x.active)&&<div className="grudgeBox"><b>Ân oán chưa dứt</b>{g.martial.grudges.filter((x:Grudge)=>x.active).map((x:Grudge)=><p key={x.npcId}>{x.reason} · Mức {x.level}</p>)}</div>}
+  </section>:tab==='business'&&g.company?<section className="history business">
    <div className="historyHead"><div><span className="chapter">THƯƠNG TRƯỜNG</span><h2>{g.company.name}</h2></div><span>Thành lập năm {g.company.foundedAge} tuổi</span></div>
    <div className="businessGrid">
     <div><span>Tiền mặt</span><b>{g.company.cash}</b><i><em style={{width:g.company.cash+'%'}}/></i></div>
@@ -256,12 +428,13 @@ function App(){
   </section>:tab==='life'?<section className="event">
    {g.dead?<><span className="chapter">BIÊN NIÊN SỬ</span><h2>Nhân sinh đã tận</h2><p>Bạn sống đến {g.age} tuổi. Không có một điểm số duy nhất để phán xét cuộc đời này.</p><button className="choice primary" onClick={newLife}>Tân Sinh một cuộc đời khác</button></>:<>
     <span className="chapter">NĂM {g.age} · {title.toUpperCase()}</span><h2>{g.current.title}</h2><p>{g.current.body}</p>
+    {g.current.combat&&<div className="combatHint"><span>XUNG ĐỘT</span><b>{g.current.combat.name}</b><em>Uy hiếp {g.current.combat.power}</em></div>}
     <div className="choices">{g.current.choices.map((c,i)=><button className="choice" onClick={()=>choose(c)} key={i}><small>{i+1}</small><span>{c.text}</span></button>)}</div>
     <div className="latest"><b>Gần nhất</b><span>{g.logs[g.logs.length-1].text}</span>{(g.seeds||[]).some((x:Seed)=>!x.resolved)&&<em className="fate">Nhân đã gieo · Quả chưa tới</em>}</div>
    </>}
   </section>:<section className="history">
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
-   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}</div></article>)}</div>
+   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}</div></article>)}</div>
   </section>}
   <footer>Tự động lưu trên thiết bị</footer>
  </main>
