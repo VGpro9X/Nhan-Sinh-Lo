@@ -1,6 +1,8 @@
 import React,{useEffect,useMemo,useState}from'react';
 import{createRoot}from'react-dom/client';
 import'./style.css';
+import{ARCHIVE_KEY,addLifeRecord,archiveSummary,makeLifeRecord,readLifeArchive,serializeLifeArchive}from'./chronicle';
+import type{LifeRecord}from'./chronicle';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
 type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'|'technology'|'crisis'};
@@ -596,7 +598,7 @@ function addOrLevelTechnique(m:Martial,id:string,name:string,kind:Technique['kin
 function fresh(seed=Math.floor(Math.random()*99999999)){
  const r=rng(seed);
  return{
-  seed,age:0,name:names[Math.floor(r()*names.length)],
+  seed,lifeId:seed+'-'+Date.now().toString(36)+'-'+Math.floor(Math.random()*100000).toString(36),age:0,name:names[Math.floor(r()*names.length)],
   stats:{sucKhoe:80+Math.floor(r()*16),triTue:25+Math.floor(r()*31),theLuc:25+Math.floor(r()*31),danhTieng:0,taiSan:10},
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
   seeds:[]as Seed[],flags:{}as Record<string,boolean>,recentEvents:[]as string[],roles:[]as Role[],company:null as Company|null,world:createWorld(seed),crisis:createCrisis(),
@@ -639,11 +641,29 @@ function App(){
    if(!old.science.cyberware)old.science.cyberware=[];
    if(!old.crisis)old.crisis=createCrisis();
    if(!old.recentEvents)old.recentEvents=[];
+   if(!old.lifeId)old.lifeId='legacy-'+old.seed+'-'+Date.now().toString(36);
    return old
   }catch{return fresh()}
  });
- const[tab,setTab]=useState<'life'|'history'|'relations'|'roles'|'business'|'martial'|'world'|'cultivation'|'science'>('life');
- useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
+ const[tab,setTab]=useState<'life'|'history'|'chronicle'|'relations'|'roles'|'business'|'martial'|'world'|'cultivation'|'science'>('life');
+ const[archive,setArchive]=useState<LifeRecord[]>(()=>{try{return readLifeArchive(localStorage.getItem(ARCHIVE_KEY))}catch{return []}});
+ const[showNewLife,setShowNewLife]=useState(false);
+ const[selectedLife,setSelectedLife]=useState<string|null>(null);
+ const[archiveError,setArchiveError]=useState('');
+ useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(g))}catch{setArchiveError('Không thể tự lưu tiến trình trên trình duyệt này. Hãy kiểm tra dung lượng bộ nhớ.')}},[g]);
+ useEffect(()=>{
+  if(!g.dead)return;
+  try{
+   const saved=readLifeArchive(localStorage.getItem(ARCHIVE_KEY));
+   if(saved.some(x=>x.id===g.lifeId&&x.status==='completed'))return;
+   const updated=addLifeRecord(saved,makeLifeRecord(g,'completed'));
+   localStorage.setItem(ARCHIVE_KEY,serializeLifeArchive(updated));
+   setArchive(updated);
+  }catch{setArchiveError('Không thể lưu cuộc đời đã hoàn thành. Bộ nhớ trình duyệt có thể đã đầy.')}
+ },[g.dead,g.lifeId]);
+ const currentChronicle=makeLifeRecord(g,g.dead?'completed':'ongoing',0);
+ const displayedChronicle=archive.find(x=>x.id===selectedLife)||currentChronicle;
+ const archiveTotals=archiveSummary(archive);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
  function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science,crisis:Crisis,recentEvents:string[]=[]){
@@ -1106,10 +1126,28 @@ function App(){
   setG({...g,age,stats:s,logs,seeds,flags,recentEvents,npcs,roles,company,martial,cultivation,science,world,crisis,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science,crisis,recentEvents)})
  }
 
- function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
+ function newLife(){setArchiveError('');setShowNewLife(true)}
+ function confirmNewLife(){
+  if(g.age>0||g.dead){
+   const updated=addLifeRecord(archive,makeLifeRecord(g,g.dead?'completed':'unfinished'));
+   try{
+    localStorage.setItem(ARCHIVE_KEY,serializeLifeArchive(updated));
+    setArchive(updated);
+   }catch{
+    setArchiveError('Không thể lưu Biên Niên Sử. Hãy giải phóng bộ nhớ trình duyệt trước khi bắt đầu cuộc đời mới.');
+    return;
+   }
+  }
+  const freshGame=fresh();
+  try{localStorage.setItem(KEY,JSON.stringify(freshGame))}catch{
+   setArchiveError('Không thể lưu tiến trình Tân Sinh. Hãy kiểm tra bộ nhớ trình duyệt.');
+   return;
+  }
+  setG(freshGame);setSelectedLife(null);setShowNewLife(false);setTab('life');setArchiveError('');
+ }
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.11</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.12</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
