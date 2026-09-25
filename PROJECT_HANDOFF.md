@@ -14,14 +14,18 @@ Read MASTER_PLAN.md before development. Nhân Sinh Lộ is a systemic choice-dri
 After each meaningful version/checkpoint: finish only that checkpoint; build/test; commit/push main; deploy GitHub Pages; report version + test URL + checklist; STOP; continue only after explicit user approval.
 
 ## Current status
-**V0.10 — Biến cố quy mô lớn implemented. AWAITING USER TEST.**
+**V0.11 — Content Expansion implemented. AWAITING USER TEST.**
 
-Implemented baseline through V0.9 remains intact: responsive React/Vite/TypeScript shell, seeded life events, delayed consequences, persistent NPC relationships, roles, business/trade war, martial conflict, World State, cultivation/occult, and science/technology.
+V0.10 was approved by the user's explicit request to continue development.
 
-V0.10 adds a persistent large-scale crisis system that can interrupt an ordinary life from adulthood onward. A run can enter one of several systemic crises: the fictional Border War, a supply-chain collapse, automated-infrastructure failure, or a supernatural Spirit Tide. Crises have severity, preparedness, community resilience, multi-year phases, escalation up to local-apocalypse conditions, recovery, World News integration, and save migration for older runs.
+V0.11 expands the systemic life content without adding a new isolated campaign. The adulthood career crossroads now includes four additional occupations: Teacher, Medical Worker, Engineer, and Artisan, alongside the existing Employee, Researcher, Freelancer, and Entrepreneur routes. Each new occupation has its own event content while generic life, relationship, world, martial, cultivation, science, business, and crisis events remain able to cross into the same run.
 
-Crisis choices cross existing systems instead of forming a separate campaign. The player can protect family, stockpile, organize community relief, evacuate, exploit scarcity, redirect an active company to emergency supply, use martial ability to protect aid routes, apply science/technology to reduce the crisis, or use cultivation to establish a safe zone. Active crises suppress economy/stability in yearly World State ticks and leave an aftermath after resolution.
+The ordinary-life pool now includes additional travel, burnout, family debt, mentorship, rumors, side-skill learning, memories, and public-speaking situations. A separate relationship pool introduces recurring family, childhood-friend, extended-family, and neighbor situations.
 
-For testability, the first major crisis is guaranteed to surface from age 24 onward if no major crisis has occurred yet; its type is selected from current World State and the run seed, with science risk and supernatural conditions able to steer the outcome. The World tab now shows crisis severity/preparedness/community state, the life screen shows an active-crisis warning, and the chronicle records major-crisis entries.
+Persistent NPC variety was expanded with extended-family and long-term-neighbor archetypes in every new life. Mentors, former students, and former apprentices can also be created dynamically by choices and delayed consequences.
 
-V0.9 is considered approved by the user's explicit request to continue development. Do not start V0.11 until the user explicitly approves V0.10. If a bug is reported, fix and redeploy V0.10 first.
+The delayed consequence system now includes several new multi-year chains: caring for a parent, responding to a friend in crisis, neighborhood trust, mentorship, family debt, helping a student stay in school, helping a patient, reporting an engineering safety issue, and training an apprentice. These callbacks can change stats, NPC bonds/memories, create new persistent NPCs, and interact with Science when relevant.
+
+V0.11 also adds anti-repeat memory. Each run stores the six most recent event titles; the Event Engine filters those events out when enough alternatives exist, reducing obvious back-to-back content repetition while preserving deterministic seeded selection and save compatibility. Older saves migrate with an empty recent-event history.
+
+Do not start V0.12 until the user explicitly approves V0.11. If a bug is reported, fix and redeploy V0.11 first.
