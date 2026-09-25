@@ -1155,6 +1155,7 @@ function App(){
   <nav>
    <button className={tab==='life'?'active':''} onClick={()=>setTab('life')}>Nhân sinh</button>
    <button className={tab==='history'?'active':''} onClick={()=>setTab('history')}>Dòng đời <i>{g.logs.length}</i></button>
+   <button className={tab==='chronicle'?'active':''} onClick={()=>setTab('chronicle')}>Biên Niên Sử <i>{archive.length}</i></button>
    <button className={tab==='relations'?'active':''} onClick={()=>setTab('relations')}>Quan hệ <i>{(g.npcs||[]).length}</i></button>
    <button className={tab==='roles'?'active':''} onClick={()=>setTab('roles')}>Vai trò <i>{(g.roles||[]).length}</i></button>
    {g.company&&<button className={tab==='business'?'active':''} onClick={()=>setTab('business')}>Doanh nghiệp</button>}
@@ -1164,7 +1165,55 @@ function App(){
    {g.science?.discovered&&<button className={tab==='science'?'active':''} onClick={()=>setTab('science')}>Công nghệ <i>{g.science.projects.length}</i></button>}
   </nav>
 
-  {tab==='science'&&g.science?.discovered?<section className="history science">
+  {tab==='chronicle'?<section className="history chronicle">
+   <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ & TÂN SINH</span><h2>Những cuộc đời đã qua</h2></div><span>Lưu trên trình duyệt này</span></div>
+   <div className="archiveStats">
+    <div><span>Cuộc đời đã lưu</span><b>{archiveTotals.lives}</b></div>
+    <div><span>Đã khép lại</span><b>{archiveTotals.completed}</b></div>
+    <div><span>Thọ nhất</span><b>{archiveTotals.longest?archiveTotals.longest+' tuổi':'—'}</b></div>
+    <div><span>Tuổi thọ TB</span><b>{archiveTotals.average?archiveTotals.average+' tuổi':'—'}</b></div>
+   </div>
+   {archiveError&&<p className="archiveError" role="alert">{archiveError}</p>}
+   <div className="archiveColumns">
+    <div className="archiveSidebar">
+     <h3>Chọn một nhân sinh</h3>
+     <button className={!selectedLife?'archiveLife active':'archiveLife'} onClick={()=>setSelectedLife(null)}>
+      <strong>{g.name} · {g.age} tuổi</strong><span>{g.dead?'Đã khép lại':'Đang tiếp diễn'} · Mệnh số #{g.seed}</span>
+     </button>
+     {archive.filter(x=>x.id!==g.lifeId).map(x=><button key={x.id} className={selectedLife===x.id?'archiveLife active':'archiveLife'} onClick={()=>setSelectedLife(x.id)}>
+      <strong>{x.name} · {x.age} tuổi</strong><span>{x.status==='completed'?'Đã khép lại':'Viết dở'} · {x.title}</span>
+     </button>)}
+     {!archive.length&&<p className="archiveEmpty">Khi một cuộc đời kết thúc hoặc bạn chọn Tân Sinh, bản ghi sẽ xuất hiện ở đây.</p>}
+     <div className="rareCollection"><b>Hành trình hiếm đã khám phá</b>
+      {archiveTotals.rarePaths.length?<div>{archiveTotals.rarePaths.map(x=><span key={x}>{x}</span>)}</div>:<p>Chưa khám phá hành trình hiếm. Mỗi cuộc đời có thể để lại một dấu ấn khác nhau.</p>}
+     </div>
+    </div>
+    <div className="archiveDetail">
+     <div className="archiveHeading"><span>{displayedChronicle.status==='completed'?'MỘT ĐỜI ĐÃ KHÉP LẠI':displayedChronicle.status==='unfinished'?'CUỘC ĐỜI VIẾT DỞ':'TRANG ĐỜI ĐANG MỞ'}</span><h3>{displayedChronicle.title}</h3><p>{displayedChronicle.name} · {displayedChronicle.age} tuổi · Mệnh số #{displayedChronicle.seed}</p><p>{displayedChronicle.ending}</p></div>
+     <div className="archiveStats compact">
+      <div><span>Sức khỏe</span><b>{displayedChronicle.stats.sucKhoe}</b></div>
+      <div><span>Trí tuệ</span><b>{displayedChronicle.stats.triTue}</b></div>
+      <div><span>Thể lực</span><b>{displayedChronicle.stats.theLuc}</b></div>
+      <div><span>Danh tiếng</span><b>{displayedChronicle.stats.danhTieng}</b></div>
+      <div><span>Tài sản</span><b>{displayedChronicle.stats.taiSan}</b></div>
+     </div>
+     <div className="archiveSection"><h4>Những con đường từng đi</h4><p>{displayedChronicle.roles.length?displayedChronicle.roles.join(' · '):'Một đời chưa chọn nghề nghiệp.'}{displayedChronicle.company?' · '+displayedChronicle.company:''}</p>
+      <div className="pathTags">{displayedChronicle.paths.map(p=><span key={p.id} className={p.rare?'rarePath':''} title={p.detail}>{p.rare?'✦ ':''}{p.name}</span>)}</div>
+     </div>
+     <div className="archiveSection"><h4>Nhân → Quả</h4><p>{displayedChronicle.resolvedCauses} quả đã tới · {displayedChronicle.pendingCauses} nhân đang chờ.</p></div>
+     <div className="archiveSection"><h4>Những người để lại dấu ấn</h4>
+      {displayedChronicle.people.length?<div className="archivePeople">{displayedChronicle.people.map((p,i)=><div key={p.name+i}><strong>{p.name}</strong><span>{p.relation} · Gắn kết {p.bond}</span><p>{p.memory}</p></div>)}</div>:<p>Chưa có ký ức quan hệ nổi bật.</p>}
+     </div>
+     <div className="archiveSection"><h4>Những bước ngoặt</h4>
+      <div className="archiveTimeline">{displayedChronicle.highlights.map((l,i)=><div key={i}><b>{l.age}</b><p>{l.text}</p></div>)}</div>
+      {!displayedChronicle.highlights.length&&<p>Cuộc đời này chưa có bước ngoặt được ghi lại.</p>}
+     </div>
+     <div className="archiveSection"><h4>Toàn bộ nhật ký đã lưu <small>({displayedChronicle.logs.length})</small></h4>
+      <details className="archiveFullLog"><summary>Xem dòng đời đầy đủ</summary><div className="archiveTimeline">{displayedChronicle.logs.map((l,i)=><div key={i}><b>{l.age}</b><p>{l.text}</p></div>)}</div></details>
+     </div>
+    </div>
+   </div>
+  </section>:tab==='science'&&g.science?.discovered?<section className="history science">
    <div className="historyHead"><div><span className="chapter">KHOA HỌC / CÔNG NGHỆ / TƯƠNG LAI</span><h2>{g.science.lab||'Nghiên cứu độc lập'}</h2></div><span>AI {g.science.aiLevel}</span></div>
    <div className="scienceStats">
     <div><span>Tri thức</span><b>{g.science.knowledge}</b><i><em style={{width:g.science.knowledge+'%'}}/></i></div>
@@ -1231,7 +1280,7 @@ function App(){
    <div className="historyHead"><div><span className="chapter">NHỮNG NGƯỜI TRONG ĐỜI</span><h2>Quan hệ của {g.name}</h2></div></div>
    <div className="relationList">{(g.npcs||[]).map((n:NPC)=><article key={n.id}><div className="npcAvatar">{n.name[0]}</div><div className="npcBody"><strong>{n.name}</strong><span>{n.relation} · {n.role}</span><p>{n.memory}</p><div className="bond"><i style={{width:n.bond+'%'}}/></div></div><b>{n.bond}</b></article>)}</div>
   </section>:tab==='life'?<section className="event">
-   {g.dead?<><span className="chapter">BIÊN NIÊN SỬ</span><h2>Nhân sinh đã tận</h2><p>Bạn sống đến {g.age} tuổi. Không có một điểm số duy nhất để phán xét cuộc đời này.</p><button className="choice primary" onClick={newLife}>Tân Sinh một cuộc đời khác</button></>:<>
+   {g.dead?<><span className="chapter">MỘT ĐỜI ĐÃ KHÉP LẠI</span><h2>{currentChronicle.title}</h2><p>Bạn sống đến {g.age} tuổi. {currentChronicle.ending} Câu chuyện được lưu vào Biên Niên Sử trên thiết bị này.</p><div className="endActions"><button className="choice primary" onClick={()=>{setSelectedLife(null);setTab('chronicle')}}>Xem Biên Niên Sử cuộc đời</button><button className="choice" onClick={newLife}>Tân Sinh một cuộc đời khác</button></div></>:<>
     <span className="chapter">NĂM {g.age} · {title.toUpperCase()}</span><h2>{g.current.title}</h2><p>{g.current.body}</p>
     {g.crisis?.active&&<div className="crisisHint"><span>BIẾN CỐ LỚN</span><b>{g.crisis.name}</b><em>{g.crisis.severity}/100</em></div>}
     {g.current.combat&&<div className="combatHint"><span>XUNG ĐỘT</span><b>{g.current.combat.name}</b><em>Uy hiếp {g.current.combat.power}</em></div>}
@@ -1242,7 +1291,15 @@ function App(){
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
    <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}{l.kind==='technology'&&<small className="techTag">KHOA HỌC / CÔNG NGHỆ</small>}{l.kind==='crisis'&&<small className="crisisTag">BIẾN CỐ LỚN</small>}</div></article>)}</div>
   </section>}
-  <footer>Tự động lưu trên thiết bị</footer>
+  <footer>Tự động lưu trên thiết bị · Biên Niên Sử được lưu trong trình duyệt hiện tại</footer>
+  {showNewLife&&<div className="newLifeBackdrop" onClick={()=>setShowNewLife(false)}><div className="newLifeDialog" role="dialog" aria-modal="true" aria-labelledby="newLifeHeading" onClick={e=>e.stopPropagation()}>
+   <span className="chapter">CHUẨN BỊ TÂN SINH</span><h2 id="newLifeHeading">Mở một cuộc đời khác?</h2>
+   <p>{g.age===0?'Cuộc đời này chưa có lựa chọn nào đáng kể để lưu.':g.dead?'Cuộc đời vừa khép lại sẽ được giữ trong Biên Niên Sử.':'Cuộc đời của '+g.name+' ở tuổi '+g.age+' sẽ được lưu dưới dạng “viết dở” để bạn có thể đọc lại.'}</p>
+   <div className="newLifePreview"><strong>{currentChronicle.title}</strong><span>{g.name} · {g.age} tuổi</span><small>{currentChronicle.resolvedCauses} Nhân → Quả đã hoàn thành · {currentChronicle.paths.filter(p=>p.rare).length} hành trình hiếm</small></div>
+   <p className="archiveWarning">Bản ghi các cuộc đời lưu trên trình duyệt này; xóa dữ liệu trình duyệt sẽ xóa các bản ghi.</p>
+   {archiveError&&<p className="archiveError" role="alert">{archiveError}</p>}
+   <div className="newLifeActions"><button className="ghost" onClick={()=>setShowNewLife(false)}>Quay lại cuộc đời hiện tại</button><button className="choice primary" onClick={confirmNewLife}>Lưu lại & Tân Sinh</button></div>
+  </div></div>}
  </main>
 }
 createRoot(document.getElementById('root')!).render(<App/>);
