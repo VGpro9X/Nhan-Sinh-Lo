@@ -3,7 +3,7 @@ import{createRoot}from'react-dom/client';
 import'./style.css';
 
 type Stats={sucKhoe:number;triTue:number;theLuc:number;danhTieng:number;taiSan:number};
-type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'|'technology'};
+type Log={age:number;text:string;kind?:'event'|'cause'|'effect'|'business'|'combat'|'world'|'cultivation'|'technology'|'crisis'};
 type Seed={id:string;createdAge:number;dueAge:number;label:string;resolved:boolean};
 type NPC={id:string;name:string;role:string;relation:string;bond:number;memory:string;alive:boolean};
 type Role={id:string;name:string;since:number;active:boolean;level:number};
@@ -19,15 +19,18 @@ type Artifact={id:string;name:string;grade:string;note:string};
 type Cultivation={discovered:boolean;spiritRoot:string;realm:number;qi:number;foundation:number;sect:string|null;arts:CultArt[];artifacts:Artifact[];mystery:number};
 type TechProject={id:string;name:string;progress:number;status:'Nghiên cứu'|'Hoàn thành';note:string};
 type Science={discovered:boolean;knowledge:number;innovation:number;funding:number;aiLevel:number;risk:number;lab:string|null;cyberware:string[];projects:TechProject[]};
+type CrisisKind='war'|'collapse'|'system'|'supernatural';
+type Crisis={active:boolean;kind:CrisisKind|null;name:string;startedAge:number;startedYear:number;severity:number;preparedness:number;community:number;phase:number;resolved:boolean;note:string};
 type BusinessAction='price_war'|'quality'|'supplier'|'retain_staff'|'promote_staff'|'lose_staff'|'expand'|'reserve'|'fight_rival_son'|'legal_response'|'walk_away';
 type WorldAction='upskill'|'save'|'invest'|'network'|'observe';
 type MartialAction='learn_fist'|'learn_step'|'train_fist'|'train_guard'|'train_step'|'strike'|'guard'|'evade'|'deescalate';
 type CultAction='awaken_breath'|'inspect_relic'|'ignore_mystery'|'meditate'|'refine_body'|'seek_clue'|'join_sect'|'refuse_sect'|'breakthrough'|'stabilize'|'delay_breakthrough'|'seal_spirit'|'follow_spirit'|'avoid_spirit';
 type TechAction='enter_lab'|'garage_invent'|'ignore_science'|'research_ai'|'sandbox_ai'|'release_ai'|'build_exosuit'|'fund_research'|'neural_implant'|'assist_implant'|'study_relic'|'quantum_sensor'|'space_probe';
+type CrisisAction='protect_family'|'stockpile'|'organize'|'evacuate'|'company_relief'|'martial_guard'|'science_solution'|'cult_barrier'|'profit'|'rebuild';
 type CombatSpec={id:string;name:string;power:number;grudgeId?:string};
-type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction;cultAction?:CultAction;techAction?:TechAction};
+type Choice={text:string;result:string;effect:Partial<Stats>;seed?:{id:string;label:string;delay:number};role?:string;businessAction?:BusinessAction;martialAction?:MartialAction;worldAction?:WorldAction;cultAction?:CultAction;techAction?:TechAction;crisisAction?:CrisisAction};
 type WorldCondition='weak_economy'|'strong_economy'|'tech_wave';
-type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec;worldCondition?:WorldCondition};
+type Event={title:string;body:string;min:number;max:number;choices:Choice[];role?:string;combat?:CombatSpec;worldCondition?:WorldCondition;crisisKind?:CrisisKind};
 
 const careerEvent:Event={
  title:'Ngã rẽ trưởng thành',
@@ -236,6 +239,54 @@ const hybridScienceEvent:Event={
  ]
 };
 
+
+function createCrisis():Crisis{
+ return{active:false,kind:null,name:'',startedAge:-1,startedYear:-1,severity:0,preparedness:0,community:0,phase:0,resolved:false,note:'Chưa có biến cố quy mô lớn.'}
+}
+function crisisName(kind:CrisisKind){
+ return kind==='war'?'Chiến tranh Biên Vực':kind==='collapse'?'Đại Khủng Hoảng Chuỗi Cung Ứng':kind==='system'?'Sự cố Hạ tầng Tự động':'Linh Triều Vỡ Bờ'
+}
+function pickCrisisKind(seed:number,world:WorldState,science:Science,cult:Cultivation):CrisisKind{
+ if(science.discovered&&science.risk>=45)return'system';
+ if(cult.discovered&&world.supernatural>=18)return'supernatural';
+ if(world.stability<=42)return'war';
+ return(['war','collapse','system','supernatural']as CrisisKind[])[Math.abs(seed+world.year+world.technology)%4]
+}
+function crisisOpeningEvent(kind:CrisisKind):Event{
+ const data={
+  war:{title:'Chiến tranh Biên Vực bùng nổ',body:'Xung đột giữa các thế lực hư cấu ở vùng biên leo thang thành chiến tranh. Giao thông bị kiểm soát, giá cả tăng mạnh và nhiều gia đình bắt đầu rời khỏi khu vực nguy hiểm.'},
+  collapse:{title:'Chuỗi cung ứng toàn vùng đứt gãy',body:'Nhiều tuyến vận chuyển cùng lúc ngừng hoạt động. Nhiên liệu, thuốc men và nguyên liệu trở nên khan hiếm; doanh nghiệp lẫn gia đình đều phải thay đổi cách sống.'},
+  system:{title:'Hạ tầng tự động bắt đầu mất kiểm soát',body:'Mạng lưới vận tải, kho hàng và thanh toán tự động liên tục đưa ra quyết định sai lệch. Một lỗi cục bộ nhanh chóng biến thành khủng hoảng trên diện rộng.'},
+  supernatural:{title:'Linh Triều tràn qua thành phố',body:'Nồng độ linh khí tăng vọt chỉ trong vài giờ. Thiết bị nhiễu loạn, động vật hoảng loạn và những hiện tượng trước đây chỉ xuất hiện lẻ tẻ đồng loạt bùng phát.'}
+ }[kind];
+ return{title:data.title,body:data.body,min:0,max:140,crisisKind:kind,choices:[
+  {text:'Ưu tiên bảo vệ gia đình và người thân',result:'Bạn thu hẹp mọi kế hoạch khác để bảo đảm những người gần mình có nơi trú ẩn và liên lạc.',effect:{taiSan:-2},crisisAction:'protect_family'},
+  {text:'Tích trữ nhu yếu phẩm và chuẩn bị dài ngày',result:'Bạn chấp nhận tốn nguồn lực để đổi lấy khả năng chống chịu tốt hơn nếu tình hình xấu thêm.',effect:{taiSan:-4},crisisAction:'stockpile'},
+  {text:'Kết nối hàng xóm và lập nhóm hỗ trợ',result:'Bạn không thể ngăn biến cố lớn, nhưng có thể khiến những người quanh mình bớt đơn độc.',effect:{danhTieng:2,sucKhoe:-1},crisisAction:'organize'}
+ ]}
+}
+function crisisPressureEvent(crisis:Crisis,company:Company|null,martial:Martial,cult:Cultivation,science:Science):Event{
+ const choices:Choice[]=[
+  {text:'Giữ gia đình an toàn, hạn chế ra ngoài',result:'Bạn co cụm nguồn lực quanh người thân và chấp nhận bỏ lỡ nhiều cơ hội bên ngoài.',effect:{sucKhoe:2,taiSan:-2},crisisAction:'protect_family'},
+  {text:'Tham gia mạng lưới cứu trợ cộng đồng',result:'Bạn dành thời gian và nguồn lực để giữ cho khu vực mình sống không tan rã.',effect:{danhTieng:3,sucKhoe:-2},crisisAction:'organize'},
+  {text:'Rời khỏi vùng nguy hiểm khi còn kịp',result:'Bạn di chuyển tới khu vực an toàn hơn, đổi lại là mất mát tài sản và đứt quãng các kế hoạch đang có.',effect:{taiSan:-4},crisisAction:'evacuate'}
+ ];
+ if(company&&company.status!=='closed')choices.push({text:'Chuyển doanh nghiệp sang cung ứng khẩn cấp',result:'Công ty tạm bỏ mục tiêu tăng trưởng để vận chuyển và cung cấp những thứ cộng đồng đang thiếu.',effect:{danhTieng:3},crisisAction:'company_relief'});
+ if(martial.discovered)choices.push({text:'Dùng võ đạo bảo vệ tuyến cứu trợ',result:'Bạn trực tiếp tham gia những nơi hỗn loạn nhất để giữ trật tự và bảo vệ người yếu thế.',effect:{theLuc:1,sucKhoe:-2},crisisAction:'martial_guard'});
+ if(science.discovered)choices.push({text:'Dùng nghiên cứu để tìm giải pháp kỹ thuật',result:'Bạn biến phòng thí nghiệm và dữ liệu thành công cụ xử lý một phần nguyên nhân của khủng hoảng.',effect:{triTue:2},crisisAction:'science_solution'});
+ if(cult.discovered)choices.push({text:'Dùng tu hành dựng vùng an toàn',result:'Bạn tiêu hao linh khí để bảo vệ một khu vực nhỏ trước những tác động mà phương pháp thông thường khó xử lý.',effect:{sucKhoe:-1},crisisAction:'cult_barrier'});
+ choices.push({text:'Tận dụng hỗn loạn để kiếm lợi',result:'Bạn mua rẻ bán đắt khi người khác đang thiếu lựa chọn. Tài sản tăng lên, nhưng ký ức về việc này sẽ không dễ biến mất.',effect:{taiSan:8,danhTieng:-5},crisisAction:'profit'});
+ const stage=crisis.severity>=82?'TẬN THẾ CỤC BỘ':crisis.severity>=62?'KHỦNG HOẢNG NGHIÊM TRỌNG':'KHỦNG HOẢNG';
+ return{title:stage+' · '+crisis.name,body:'Biến cố đã kéo dài '+Math.max(1,crisis.phase)+' năm. Mức nguy hiểm hiện tại là '+crisis.severity+'/100. Những lựa chọn của bạn đang tác động tới cả khả năng sống sót của bản thân lẫn sức chịu đựng của cộng đồng.',min:0,max:140,choices}
+}
+function crisisRecoveryEvent(crisis:Crisis):Event{
+ return{title:'Bước qua hậu chấn của '+crisis.name,body:'Cường độ biến cố đã giảm hoặc xã hội đã học được cách thích nghi. Giai đoạn khẩn cấp sắp kết thúc, nhưng cách bạn tham gia tái thiết sẽ quyết định dấu vết còn lại trong cuộc đời này.',min:0,max:140,choices:[
+  {text:'Ở lại tái thiết cộng đồng',result:'Bạn dành một phần những năm sau khủng hoảng để giúp cuộc sống quanh mình vận hành trở lại.',effect:{danhTieng:5,sucKhoe:-1},crisisAction:'rebuild'},
+  {text:'Tập trung dựng lại cuộc sống riêng',result:'Bạn ưu tiên gia đình, công việc và những thứ đã bị gián đoạn quá lâu.',effect:{sucKhoe:3,taiSan:2},crisisAction:'rebuild'},
+  {text:'Ghi chép và rút kinh nghiệm từ biến cố',result:'Bạn biến những gì đã trải qua thành tri thức cho những năm tiếp theo.',effect:{triTue:5},crisisAction:'rebuild'}
+ ]}
+}
+
 const roleEvents:Event[]=[
  {title:'Áp lực nơi làm việc',body:'Một dự án ở nơi làm việc gặp trục trặc. Đồng nghiệp đang chờ xem bạn phản ứng thế nào.',min:19,max:70,role:'employee',choices:[
   {text:'Nhận thêm trách nhiệm',result:'Bạn đứng ra xử lý phần việc khó.',effect:{danhTieng:4,sucKhoe:-2}},
@@ -359,7 +410,7 @@ function createWorld(seed:number):WorldState{
  }
 }
 
-function advanceWorld(world:WorldState,seed:number,age:number,company:Company|null,npcs:NPC[],roles:Role[]){
+function advanceWorld(world:WorldState,seed:number,age:number,company:Company|null,npcs:NPC[],roles:Role[],crisis:Crisis){
  const r=rng(seed+age*12347+world.year*17);
  world.year+=1;
  const oldEconomy=world.economy,oldTech=world.technology,oldStability=world.stability;
@@ -367,6 +418,21 @@ function advanceWorld(world:WorldState,seed:number,age:number,company:Company|nu
  world.stability=clamp(world.stability+Math.floor(r()*9)-4);
  world.technology=clamp(world.technology+1+Math.floor(r()*3));
  world.supernatural=clamp(world.supernatural+(r()<.16?1:0));
+
+ if(crisis.active){
+  const pressure=2+Math.floor(crisis.severity/28);
+  world.economy=clamp(world.economy-pressure);
+  world.stability=clamp(world.stability-pressure);
+  crisis.severity=clamp(crisis.severity+Math.floor(r()*9)-4-Math.floor(crisis.preparedness/45)-Math.floor(crisis.community/55));
+  crisis.preparedness=clamp(crisis.preparedness-1);
+  if(crisis.severity>=82)crisis.note='Biến cố đã chạm ngưỡng tận thế cục bộ; các hệ thống bình thường bắt đầu mất khả năng vận hành.';
+  else if(crisis.severity>=60)crisis.note='Khủng hoảng vẫn nghiêm trọng và đang chi phối phần lớn đời sống.';
+  else crisis.note='Tình hình còn nguy hiểm nhưng các cộng đồng đã bắt đầu thích nghi.';
+  if(age>0&&age%2===0){
+   world.news.unshift({age,year:world.year,title:'Khủng hoảng tiếp diễn: '+crisis.name,text:'Mức nguy hiểm '+crisis.severity+'/100. Kinh tế và ổn định xã hội tiếp tục chịu sức ép.'});
+   world.news=world.news.slice(0,12)
+  }
+ }
 
  for(const o of world.organizations){
   o.power=clamp(o.power+Math.floor(r()*9)-4);
@@ -419,7 +485,7 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   seed,age:0,name:names[Math.floor(r()*names.length)],
   stats:{sucKhoe:80+Math.floor(r()*16),triTue:25+Math.floor(r()*31),theLuc:25+Math.floor(r()*31),danhTieng:0,taiSan:10},
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
-  seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),
+  seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),crisis:createCrisis(),
   martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
   cultivation:createCultivation(),
   science:createScience(),
@@ -455,6 +521,7 @@ function App(){
    if(!old.science)old.science=createScience();
    if(!old.science.projects)old.science.projects=[];
    if(!old.science.cyberware)old.science.cyberware=[];
+   if(!old.crisis)old.crisis=createCrisis();
    return old
   }catch{return fresh()}
  });
@@ -462,12 +529,17 @@ function App(){
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science){
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science,crisis:Crisis){
   if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
   if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
   const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
   if(dueGrudge)return revengeEvent(dueGrudge);
   if(age>=18&&roles.length===0)return careerEvent;
+  if(crisis.active){
+   if(crisis.phase>=5||crisis.severity<=24)return crisisRecoveryEvent(crisis);
+   return crisisPressureEvent(crisis,company,martial,cult,science)
+  }
+  if(age>=24&&!flags.major_crisis_seen)return crisisOpeningEvent(pickCrisisKind(seed,world,science,cult));
   const activeEarly=roles.filter(x=>x.active).map(x=>x.id);
   if(!flags.science_intro_seen&&((age>=19&&activeEarly.includes('researcher'))||(age>=22&&world.technology>=68)))return scienceIntroEvent;
   if(science.discovered&&science.aiLevel>=18&&!flags.ai_threshold_seen)return aiThresholdEvent;
@@ -700,6 +772,39 @@ function App(){
   return null
  }
 
+
+ function resolveCrisis(action:CrisisAction|undefined,event:Event,crisis:Crisis,stats:Stats,world:WorldState,company:Company|null,martial:Martial,cult:Cultivation,science:Science){
+  if(!action)return null;
+  if(event.crisisKind&&!crisis.active){
+   crisis.active=true;crisis.kind=event.crisisKind;crisis.name=crisisName(event.crisisKind);crisis.startedAge=g.age;crisis.startedYear=world.year;
+   crisis.severity=event.crisisKind==='war'?66:event.crisisKind==='collapse'?58:event.crisisKind==='system'?64:70;
+   crisis.preparedness=10;crisis.community=22;crisis.phase=0;crisis.resolved=false;crisis.note='Biến cố vừa bùng nổ và chưa ai biết nó sẽ kéo dài bao lâu.';
+   world.economy=clamp(world.economy-6);world.stability=clamp(world.stability-8);
+   world.news.unshift({age:g.age,year:world.year,title:crisis.name+' bùng nổ',text:'Một biến cố quy mô lớn bắt đầu làm thay đổi nhịp sống, thị trường và hoạt động của các tổ chức.'});
+   world.news=world.news.slice(0,12)
+  }
+  crisis.phase+=1;
+  if(action==='protect_family'){crisis.preparedness+=12;crisis.community+=2;stats.sucKhoe=clamp(stats.sucKhoe+2);stats.taiSan=clamp(stats.taiSan-2);crisis.severity-=1}
+  if(action==='stockpile'){crisis.preparedness+=17;stats.taiSan=clamp(stats.taiSan-5);crisis.severity-=2}
+  if(action==='organize'){crisis.community+=14;crisis.preparedness+=4;crisis.severity-=4;stats.danhTieng=clamp(stats.danhTieng+2)}
+  if(action==='evacuate'){crisis.preparedness+=8;crisis.community-=4;crisis.severity-=2;stats.sucKhoe=clamp(stats.sucKhoe+3)}
+  if(action==='company_relief'&&company){company.cash=clamp(company.cash-8);company.reputation=clamp(company.reputation+9);company.staff=clamp(company.staff+3);crisis.community+=11;crisis.preparedness+=5;crisis.severity-=5}
+  if(action==='martial_guard'&&martial.discovered){martial.experience+=10;martial.power=clamp(martial.power+2);martial.wounds+=1;crisis.community+=9;crisis.severity-=7;stats.sucKhoe=clamp(stats.sucKhoe-2)}
+  if(action==='science_solution'&&science.discovered){science.knowledge=clamp(science.knowledge+5);science.innovation=clamp(science.innovation+4);science.funding=clamp(science.funding-3);world.technology=clamp(world.technology+1);crisis.preparedness+=6;crisis.severity-=6+Math.floor(science.innovation/25)}
+  if(action==='cult_barrier'&&cult.discovered){cult.qi=Math.max(0,cult.qi-6);cult.foundation=clamp(cult.foundation-2);crisis.community+=8;crisis.preparedness+=5;crisis.severity-=8+cult.realm*2;world.supernatural=clamp(world.supernatural-1)}
+  if(action==='profit'){stats.taiSan=clamp(stats.taiSan+6);stats.danhTieng=clamp(stats.danhTieng-6);crisis.community-=10;crisis.severity+=3;if(company)company.cash=clamp(company.cash+7)}
+  if(action==='rebuild'){
+   crisis.severity=Math.max(0,crisis.severity-18);crisis.community+=8;crisis.preparedness+=5;crisis.active=false;crisis.resolved=true;
+   world.stability=clamp(world.stability+7);world.economy=clamp(world.economy+4);
+   crisis.note='Giai đoạn khẩn cấp đã kết thúc. Dấu vết của biến cố vẫn còn trong thế giới và các mối quan hệ.';
+   world.news.unshift({age:g.age,year:world.year,title:'Giai đoạn khẩn cấp kết thúc',text:crisis.name+' rút khỏi tâm điểm đời sống. Tái thiết bắt đầu, nhưng thế giới không trở lại hoàn toàn như trước.'});
+   world.news=world.news.slice(0,12)
+  }
+  crisis.severity=clamp(crisis.severity);crisis.preparedness=clamp(crisis.preparedness);crisis.community=clamp(crisis.community);
+  if(crisis.active&&crisis.severity>=82)crisis.note='Tình hình đã leo thang tới mức tận thế cục bộ; những hệ thống từng được xem là hiển nhiên đang đổ vỡ.';
+  return{outcome:crisis.resolved?'resolved':'active',text:crisis.resolved?'Bạn bước qua giai đoạn khẩn cấp của '+crisis.name+'.':'Bạn ứng phó với '+crisis.name+'. Mức nguy hiểm hiện tại: '+crisis.severity+'/100.'}
+ }
+
  function choose(c:Choice){
   if(g.dead)return;
   const age=g.age+1,s={...g.stats},roles=(g.roles||[]).map((x:Role)=>({...x})),npcs=(g.npcs||[]).map((n:NPC)=>({...n}));
@@ -708,6 +813,7 @@ function App(){
   const martial:Martial={...(g.martial||{discovered:false,power:16,experience:0,wounds:0,techniques:[],grudges:[]}),techniques:(g.martial?.techniques||[]).map((x:Technique)=>({...x})),grudges:(g.martial?.grudges||[]).map((x:Grudge)=>({...x}))};
   const cultivation:Cultivation={...(g.cultivation||createCultivation()),arts:(g.cultivation?.arts||[]).map((x:CultArt)=>({...x})),artifacts:(g.cultivation?.artifacts||[]).map((x:Artifact)=>({...x}))};
   const science:Science={...(g.science||createScience()),cyberware:[...(g.science?.cyberware||[])],projects:(g.science?.projects||[]).map((x:TechProject)=>({...x}))};
+  const crisis:Crisis={...(g.crisis||createCrisis())};
   let flags={...(g.flags||{})};
 
   if(c.role&&!roles.some((x:Role)=>x.id===c.role)){
@@ -724,6 +830,7 @@ function App(){
   const cultResult=resolveCultivation(c.cultAction,cultivation,s,world,martial);
   company=applyBusiness(c.businessAction,company,s);
   const techResult=resolveScience(c.techAction,science,s,world,martial,cultivation,company);
+  const crisisResult=resolveCrisis(c.crisisAction,g.current,crisis,s,world,company,martial,cultivation,science);
 
   if(c.worldAction==='invest'){
    if(company&&company.status!=='closed'){company.cash=clamp(company.cash-5);company.market=clamp(company.market+(world.economy>=60?7:3));company.reputation=clamp(company.reputation+2)}
@@ -734,10 +841,11 @@ function App(){
   const aging=cultivation.realm>=4?(age>80?1:0):cultivation.realm>=2?(age>60?1:age>35?1:0):(age>55?2:age>30?1:0);
   s.sucKhoe=clamp(s.sucKhoe-aging);
 
-  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.businessAction?'business':c.martialAction?'combat':c.cultAction?'cultivation':c.techAction?'technology':'event'}as Log];
+  let seeds=[...(g.seeds||[])],logs=[...g.logs,{age:g.age,text:g.current.title+' — '+c.result,kind:c.crisisAction?'crisis':c.businessAction?'business':c.martialAction?'combat':c.cultAction?'cultivation':c.techAction?'technology':'event'}as Log];
   if(martialResult)logs.push({age:g.age,text:'Võ đạo — '+martialResult.text,kind:'combat'});
   if(cultResult)logs.push({age:g.age,text:'Tu tiên / Huyền bí — '+cultResult.text,kind:'cultivation'});
   if(techResult)logs.push({age:g.age,text:'Khoa học / Công nghệ — '+techResult.text,kind:'technology'});
+  if(crisisResult)logs.push({age:g.age,text:'Biến cố lớn — '+crisisResult.text,kind:'crisis'});
 
   if(g.current===martialIntroEvent)flags.martial_intro_seen=true;
   if(g.current.title==='Cuốn sổ không có chữ')flags.mystic_intro_seen=true;
@@ -745,6 +853,7 @@ function App(){
   if(g.current.title==='Cánh cửa phòng thí nghiệm')flags.science_intro_seen=true;
   if(g.current.title==='Mô hình AI bắt đầu tự sửa mình')flags.ai_threshold_seen=true;
   if(g.current.title==='Cấy ghép thần kinh thử nghiệm')flags.cyber_intro_seen=true;
+  if(g.current.crisisKind)flags.major_crisis_seen=true;
   if(g.current.title==='Lời thách đấu đầu tiên'){
    flags.martial_first_duel_done=true;
    let rival=npcs.find((n:NPC)=>n.id==='martial_rival');
@@ -812,17 +921,17 @@ function App(){
   }
 
   if(science.discovered&&age%3===0)world.technology=clamp(world.technology+1+Math.floor(science.innovation/35));
-  advanceWorld(world,g.seed,age,company,npcs,roles);
+  advanceWorld(world,g.seed,age,company,npcs,roles,crisis);
   const lifespanBonus=cultivation.realm>=4?30:cultivation.realm>=3?16:cultivation.realm>=2?8:0;
   const dead=s.sucKhoe<=0||age>=82+(g.seed%17)+lifespanBonus;
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,science,world,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science)})
+  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,science,world,crisis,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science,crisis)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.9</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.10</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
@@ -873,6 +982,7 @@ function App(){
     <div><span>Công nghệ</span><b>{g.world.technology}</b><i><em style={{width:g.world.technology+'%'}}/></i></div>
     <div><span>Siêu nhiên</span><b>{g.world.supernatural}</b><i><em style={{width:g.world.supernatural+'%'}}/></i></div>
    </div>
+   {g.crisis?.active?<div className="crisisPanel"><div><span>BIẾN CỐ QUY MÔ LỚN</span><strong>{g.crisis.name}</strong><p>{g.crisis.note}</p></div><div className="crisisNumbers"><b>{g.crisis.severity}</b><small>Nguy hiểm</small><b>{g.crisis.preparedness}</b><small>Chuẩn bị</small><b>{g.crisis.community}</b><small>Cộng đồng</small></div></div>:g.crisis?.resolved?<div className="crisisAfter"><b>Hậu chấn: {g.crisis.name}</b><span>{g.crisis.note}</span></div>:null}
    <h3>Tổ chức</h3>
    <div className="orgList">{g.world.organizations.map((o:Organization)=><article key={o.id}><div><strong>{o.name}</strong><span>{o.kind} · {o.status}</span></div><div className="orgNumbers"><b>{o.power}</b><small>Sức mạnh</small><b>{o.influence}</b><small>Ảnh hưởng</small></div></article>)}</div>
    <h3>Biến động gần đây</h3>
@@ -907,13 +1017,14 @@ function App(){
   </section>:tab==='life'?<section className="event">
    {g.dead?<><span className="chapter">BIÊN NIÊN SỬ</span><h2>Nhân sinh đã tận</h2><p>Bạn sống đến {g.age} tuổi. Không có một điểm số duy nhất để phán xét cuộc đời này.</p><button className="choice primary" onClick={newLife}>Tân Sinh một cuộc đời khác</button></>:<>
     <span className="chapter">NĂM {g.age} · {title.toUpperCase()}</span><h2>{g.current.title}</h2><p>{g.current.body}</p>
+    {g.crisis?.active&&<div className="crisisHint"><span>BIẾN CỐ LỚN</span><b>{g.crisis.name}</b><em>{g.crisis.severity}/100</em></div>}
     {g.current.combat&&<div className="combatHint"><span>XUNG ĐỘT</span><b>{g.current.combat.name}</b><em>Uy hiếp {g.current.combat.power}</em></div>}
     <div className="choices">{g.current.choices.map((c,i)=><button className="choice" onClick={()=>choose(c)} key={i}><small>{i+1}</small><span>{c.text}</span></button>)}</div>
     <div className="latest"><b>Gần nhất</b><span>{g.logs[g.logs.length-1].text}</span>{(g.seeds||[]).some((x:Seed)=>!x.resolved)&&<em className="fate">Nhân đã gieo · Quả chưa tới</em>}</div>
    </>}
   </section>:<section className="history">
    <div className="historyHead"><div><span className="chapter">BIÊN NIÊN SỬ</span><h2>Dòng đời của {g.name}</h2></div><span>Mệnh số #{g.seed}</span></div>
-   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}{l.kind==='technology'&&<small className="techTag">KHOA HỌC / CÔNG NGHỆ</small>}</div></article>)}</div>
+   <div className="historyList">{[...g.logs].reverse().map((l,i)=><article key={i}><b>{l.age}</b><div><strong>{l.age} tuổi</strong><p>{l.text}</p>{l.kind==='effect'&&<small className="karma">NHÂN → QUẢ</small>}{l.kind==='business'&&<small className="trade">THƯƠNG TRƯỜNG</small>}{l.kind==='combat'&&<small className="combatTag">VÕ ĐẠO</small>}{l.kind==='world'&&<small className="worldTag">THẾ GIỚI</small>}{l.kind==='cultivation'&&<small className="cultTag">TU TIÊN / HUYỀN BÍ</small>}{l.kind==='technology'&&<small className="techTag">KHOA HỌC / CÔNG NGHỆ</small>}{l.kind==='crisis'&&<small className="crisisTag">BIẾN CỐ LỚN</small>}</div></article>)}</div>
   </section>}
   <footer>Tự động lưu trên thiết bị</footer>
  </main>
