@@ -15,7 +15,7 @@ Canonical detail: [MASTER_PLAN.md](./MASTER_PLAN.md)
 - [x] V0.8 Tu tiên / Huyền bí — **USER APPROVED**
 - [x] V0.9 Khoa học / Công nghệ / Tương lai — **USER APPROVED**
 - [x] V0.10 Biến cố quy mô lớn — **USER APPROVED**
-- [x] V0.11 Content Expansion — **AWAITING USER TEST**
-- [ ] V0.12 Life Chronicle & Replayability
+- [x] V0.11 Content Expansion — **USER APPROVED**
+- [x] V0.12 Life Chronicle & Replayability — **AWAITING USER TEST**
 
 **Rule:** Every V0.x is a hard TEST GATE. Deploy GitHub Pages and wait for user approval before starting the next checkpoint.
