@@ -40,7 +40,11 @@ const careerEvent:Event={
   {text:'Tìm một công việc ổn định',result:'Bạn bước vào môi trường công sở và học cách sống bằng nghề nghiệp ổn định.',effect:{taiSan:5},role:'employee'},
   {text:'Theo đuổi học thuật và nghiên cứu',result:'Bạn chọn con đường cần nhiều tri thức và kiên nhẫn.',effect:{triTue:5,taiSan:-2},role:'researcher'},
   {text:'Tự kiếm sống bằng kỹ năng của mình',result:'Bạn chọn cuộc sống tự do hơn, đổi lại là nhiều bất định.',effect:{danhTieng:2},role:'freelancer'},
-  {text:'Thử gây dựng việc kinh doanh riêng',result:'Bạn gom vốn, tìm khách hàng đầu tiên và bước vào một cuộc chơi nhiều cơ hội lẫn rủi ro.',effect:{taiSan:-5,triTue:2},role:'entrepreneur'}
+  {text:'Thử gây dựng việc kinh doanh riêng',result:'Bạn gom vốn, tìm khách hàng đầu tiên và bước vào một cuộc chơi nhiều cơ hội lẫn rủi ro.',effect:{taiSan:-5,triTue:2},role:'entrepreneur'},
+  {text:'Trở thành giáo viên',result:'Bạn chọn một công việc mà thành quả thường đến chậm và gắn với sự trưởng thành của người khác.',effect:{triTue:3,danhTieng:1},role:'teacher'},
+  {text:'Theo nghề y',result:'Bạn bước vào môi trường đòi hỏi kiến thức, sức bền và trách nhiệm với sinh mạng người khác.',effect:{triTue:4,sucKhoe:-1},role:'medic'},
+  {text:'Làm kỹ sư',result:'Bạn chọn con đường giải quyết vấn đề bằng thiết kế, tính toán và những lần thử sai.',effect:{triTue:4},role:'engineer'},
+  {text:'Sống bằng nghề thủ công',result:'Bạn biến kỹ năng đôi tay và gu thẩm mỹ thành kế sinh nhai riêng.',effect:{triTue:1,danhTieng:2},role:'artisan'}
  ]};
 
 const martialIntroEvent:Event={
@@ -305,6 +309,116 @@ const roleEvents:Event[]=[
  ]}
 ];
 
+
+const expandedRoleEvents:Event[]=[
+ {title:'Một học sinh sắp bỏ học',body:'Một học sinh thường xuyên vắng mặt. Sau khi tìm hiểu, bạn biết gia đình em đang gặp khó khăn và em định nghỉ học để đi làm.',min:20,max:68,role:'teacher',choices:[
+  {text:'Dành thời gian giúp em theo kịp',result:'Bạn bỏ nhiều buổi tối để kèm riêng và tìm cách giữ em ở lại trường.',effect:{sucKhoe:-2,danhTieng:2},seed:{id:'student_returns',label:'Một học sinh được giữ lại trường',delay:7}},
+  {text:'Kết nối em với quỹ hỗ trợ',result:'Bạn dùng mạng lưới thay vì cố tự giải quyết mọi thứ.',effect:{triTue:2,danhTieng:2}},
+  {text:'Giữ đúng phạm vi công việc',result:'Bạn không để một trường hợp cá nhân nuốt hết thời gian của mình.',effect:{sucKhoe:2}}
+ ]},
+ {title:'Một lớp học không chịu im lặng',body:'Cả lớp mất tập trung, giáo án không còn hiệu quả và bạn phải quyết định thay đổi cách dạy hay cố giữ kỷ luật cũ.',min:20,max:68,role:'teacher',choices:[
+  {text:'Thử một cách dạy hoàn toàn mới',result:'Bạn biến bài học thành một buổi tranh luận và thực hành.',effect:{triTue:3,danhTieng:2}},
+  {text:'Nhờ đồng nghiệp cùng thiết kế bài học',result:'Bạn học được rằng nghề dạy học không nhất thiết phải làm một mình.',effect:{triTue:2,sucKhoe:1}},
+  {text:'Giữ cách cũ và siết kỷ luật',result:'Lớp học yên hơn, nhưng khoảng cách với học sinh cũng lớn hơn.',effect:{danhTieng:1}}
+ ]},
+ {title:'Ca trực thiếu người',body:'Một ca trực đêm bất ngờ thiếu nhân sự. Bạn đã rất mệt nhưng nếu rời đi, đồng nghiệp sẽ phải gánh phần còn lại.',min:20,max:70,role:'medic',choices:[
+  {text:'Ở lại thêm một ca',result:'Bạn làm việc xuyên đêm và giúp ca trực vượt qua giai đoạn quá tải.',effect:{danhTieng:3,sucKhoe:-5}},
+  {text:'Gọi thêm hỗ trợ và tổ chức lại công việc',result:'Bạn không cố làm anh hùng, mà tìm cách dùng nguồn lực tốt hơn.',effect:{triTue:3,danhTieng:1}},
+  {text:'Bàn giao đúng giờ để giữ sức',result:'Bạn chấp nhận ánh mắt không hài lòng của vài người để tránh kiệt sức dài hạn.',effect:{sucKhoe:4}}
+ ]},
+ {title:'Một bệnh nhân không đủ tiền',body:'Một bệnh nhân cần tiếp tục điều trị nhưng gia đình họ không đủ khả năng chi trả toàn bộ.',min:22,max:70,role:'medic',choices:[
+  {text:'Tự tìm cách hỗ trợ chi phí',result:'Bạn dùng tiền và các mối quan hệ của mình để giúp họ qua giai đoạn khó nhất.',effect:{taiSan:-5,danhTieng:2},seed:{id:'patient_returns',label:'Một bệnh nhân từng được giúp đỡ',delay:6}},
+  {text:'Kết nối họ với chương trình hỗ trợ',result:'Bạn tìm một giải pháp bền vững hơn thay vì tự gánh mọi chi phí.',effect:{triTue:2,danhTieng:2}},
+  {text:'Chỉ làm đúng trách nhiệm chuyên môn',result:'Bạn giữ ranh giới rõ ràng giữa công việc và đời sống cá nhân.',effect:{sucKhoe:1}}
+ ]},
+ {title:'Sai số trong bản thiết kế',body:'Bạn phát hiện một sai số nhỏ trong hồ sơ kỹ thuật ngay trước khi dự án được duyệt. Sửa đúng quy trình sẽ khiến cả nhóm chậm tiến độ.',min:21,max:70,role:'engineer',choices:[
+  {text:'Báo lỗi và yêu cầu dừng để sửa',result:'Bạn chấp nhận chịu áp lực tiến độ để bảo vệ tính an toàn của dự án.',effect:{danhTieng:2,triTue:2},seed:{id:'safety_reputation',label:'Một lần kiên quyết dừng dự án',delay:5}},
+  {text:'Tự âm thầm sửa phần mình kiểm soát',result:'Bạn giảm được rắc rối trước mắt nhưng phải tự gánh trách nhiệm nếu còn lỗi khác.',effect:{triTue:3,sucKhoe:-1}},
+  {text:'Tin rằng sai số nằm trong giới hạn',result:'Dự án tiếp tục đúng lịch, còn nghi ngờ vẫn nằm trong đầu bạn.',effect:{danhTieng:1}}
+ ]},
+ {title:'Nguyên mẫu thất bại trước khách hàng',body:'Thiết bị chạy tốt hàng chục lần trong xưởng nhưng lại hỏng đúng lúc trình diễn.',min:21,max:70,role:'engineer',choices:[
+  {text:'Mổ xẻ lỗi ngay trước mọi người',result:'Bạn không che giấu thất bại mà biến nó thành một buổi phân tích công khai.',effect:{triTue:4,danhTieng:1}},
+  {text:'Xin thêm thời gian và làm lại từ đầu',result:'Bạn chấp nhận mất cơ hội ngắn hạn để bảo vệ chất lượng.',effect:{taiSan:-2,triTue:2}},
+  {text:'Chuyển sang giải pháp đơn giản hơn',result:'Bạn bỏ sự hào nhoáng để ưu tiên thứ thực sự hoạt động.',effect:{danhTieng:2}}
+ ]},
+ {title:'Đơn hàng thủ công đặc biệt',body:'Một khách hàng muốn bạn làm một món đồ duy nhất, khó hơn mọi thứ bạn từng nhận nhưng sẵn sàng trả giá cao.',min:19,max:72,role:'artisan',choices:[
+  {text:'Nhận và thử kỹ thuật mới',result:'Bạn dành nhiều ngày thử sai để tạo ra thứ chưa từng làm trước đây.',effect:{taiSan:5,triTue:3,sucKhoe:-2}},
+  {text:'Giữ phong cách và giới hạn của mình',result:'Bạn từ chối chạy theo mọi yêu cầu và bảo vệ dấu ấn cá nhân.',effect:{danhTieng:3}},
+  {text:'Từ chối để tránh quá tải',result:'Bạn để một khoản tiền đi qua để giữ nhịp sống hiện tại.',effect:{sucKhoe:3}}
+ ]},
+ {title:'Người học việc vụng về',body:'Một người trẻ xin theo học nghề. Họ thiếu kinh nghiệm nhưng rất kiên trì và sẵn sàng làm những việc nhỏ nhất.',min:23,max:72,role:'artisan',choices:[
+  {text:'Nhận làm học việc và dạy nghiêm túc',result:'Bạn mất nhiều thời gian sửa từng lỗi nhỏ nhưng dần thấy họ tiến bộ.',effect:{sucKhoe:-2,danhTieng:2},seed:{id:'apprentice_returns',label:'Người học việc năm ấy',delay:8}},
+  {text:'Cho họ thử việc ngắn hạn',result:'Bạn mở một cánh cửa nhưng chưa hứa điều gì lâu dài.',effect:{danhTieng:1}},
+  {text:'Từ chối vì không đủ thời gian',result:'Bạn tiếp tục làm việc một mình để giữ hiệu suất.',effect:{taiSan:2}}
+ ]}
+];
+
+const relationshipEvents:Event[]=[
+ {title:'Mẹ giấu một cơn đau',body:'Bạn nhận ra mẹ thường xuyên xoa ngực rồi nói rằng chỉ là mệt. Bà không muốn làm phiền cuộc sống của bạn.',min:21,max:72,choices:[
+  {text:'Đưa mẹ đi kiểm tra ngay',result:'Bạn gác lại công việc, mất một khoản tiền nhưng không để sự chủ quan quyết định thay mình.',effect:{taiSan:-4,sucKhoe:-1},seed:{id:'family_care_return',label:'Ngày bạn đưa mẹ đi khám',delay:5}},
+  {text:'Thuyết phục mẹ nghỉ ngơi và theo dõi thêm',result:'Bạn chưa ép bà đi khám nhưng bắt đầu để ý sức khỏe của bà nhiều hơn.',effect:{triTue:1}},
+  {text:'Tin lời mẹ rằng không có gì nghiêm trọng',result:'Bạn quay lại với lịch trình đang dang dở.',effect:{}}
+ ]},
+ {title:'Bạn cũ gọi lúc nửa đêm',body:'Người bạn thuở nhỏ gọi cho bạn trong một đêm muộn. Họ không nói rõ chuyện gì, chỉ hỏi liệu bạn có thể đến gặp không.',min:18,max:70,choices:[
+  {text:'Đi gặp ngay',result:'Bạn bỏ dở kế hoạch của mình để ngồi cạnh bạn trong một đêm rất dài.',effect:{sucKhoe:-2},seed:{id:'friend_midnight',label:'Một đêm bạn đã không bỏ mặc bạn mình',delay:6}},
+  {text:'Nói chuyện qua điện thoại thật lâu',result:'Bạn không đến được nhưng vẫn ở lại trong cuộc trò chuyện cho tới khi họ bình tĩnh hơn.',effect:{triTue:1}},
+  {text:'Hẹn hôm khác vì đã quá muộn',result:'Bạn giữ ranh giới của mình, dù cuộc gọi kết thúc nhanh hơn bình thường.',effect:{sucKhoe:1}}
+ ]},
+ {title:'Người thân muốn rời thành phố',body:'Một người thân nói họ muốn bỏ công việc hiện tại và chuyển tới một nơi khác để bắt đầu lại, dù chưa có kế hoạch chắc chắn.',min:18,max:65,choices:[
+  {text:'Ủng hộ và giúp họ chuẩn bị',result:'Bạn giúp họ tính tiền, tìm chỗ ở và chấp nhận rằng quan hệ sẽ thay đổi theo khoảng cách.',effect:{taiSan:-2,triTue:2}},
+  {text:'Khuyên họ chuẩn bị kỹ hơn',result:'Bạn không phản đối nhưng buộc họ nhìn thẳng vào những rủi ro thực tế.',effect:{triTue:2}},
+  {text:'Cố thuyết phục họ ở lại',result:'Bạn sợ mất một người quen thuộc khỏi cuộc sống hiện tại.',effect:{danhTieng:-1}}
+ ]},
+ {title:'Người hàng xóm để lại chìa khóa',body:'Hàng xóm lâu năm phải đi xa đột xuất và nhờ bạn giữ chìa khóa nhà cùng vài giấy tờ quan trọng.',min:17,max:75,choices:[
+  {text:'Nhận giúp và kiểm tra nhà thường xuyên',result:'Bạn thêm một trách nhiệm nhỏ vào lịch sống của mình.',effect:{sucKhoe:-1},seed:{id:'neighbor_trust',label:'Chìa khóa của người hàng xóm',delay:4}},
+  {text:'Nhận chìa khóa nhưng chỉ xử lý khi có việc',result:'Bạn đồng ý giúp trong giới hạn rõ ràng.',effect:{}},
+  {text:'Từ chối vì không muốn giữ tài sản người khác',result:'Bạn tránh một trách nhiệm mà mình không thoải mái nhận.',effect:{triTue:1}}
+ ]}
+];
+
+const expandedEvents:Event[]=[
+ {title:'Một người hướng dẫn khó tính',body:'Một người nhiều kinh nghiệm nhận xét thẳng rằng bạn có tiềm năng nhưng đang làm việc quá tùy hứng. Họ đề nghị chỉ dẫn, với điều kiện bạn phải chịu được sự khắt khe.',min:18,max:55,choices:[
+  {text:'Nhận lời chỉ dẫn',result:'Bạn chấp nhận những lời phê bình khó nghe để đổi lấy một người thật sự theo sát sự tiến bộ của mình.',effect:{triTue:3,sucKhoe:-1},seed:{id:'mentor_recommend',label:'Những năm được người hướng dẫn rèn giũa',delay:5}},
+  {text:'Chỉ xin vài lời khuyên',result:'Bạn lấy điều hữu ích nhưng không để người khác can thiệp quá sâu vào cuộc sống.',effect:{triTue:2}},
+  {text:'Từ chối vì muốn tự tìm đường',result:'Bạn giữ toàn bộ quyền quyết định và chấp nhận tự trả giá cho sai lầm.',effect:{danhTieng:1}}
+ ]},
+ {title:'Một khoản nợ cũ của gia đình',body:'Một khoản nợ từ nhiều năm trước bất ngờ được nhắc lại. Nó không đủ lớn để hủy hoại bạn, nhưng đủ để làm cả nhà căng thẳng.',min:22,max:65,choices:[
+  {text:'Trả phần lớn khoản nợ',result:'Bạn hy sinh tiền đang dành cho kế hoạch riêng để dọn một gánh nặng cũ.',effect:{taiSan:-7},seed:{id:'family_debt_paid',label:'Khoản nợ gia đình đã được trả',delay:7}},
+  {text:'Thương lượng trả dần',result:'Bạn giữ được một phần nguồn lực nhưng chấp nhận một nghĩa vụ kéo dài.',effect:{taiSan:-3,triTue:2}},
+  {text:'Từ chối vì đó không phải nợ của mình',result:'Bạn bảo vệ tài sản cá nhân nhưng tạo ra một khoảng lạnh trong gia đình.',effect:{taiSan:2},seed:{id:'family_debt_ignored',label:'Khoản nợ bạn từ chối gánh',delay:5}}
+ ]},
+ {title:'Một chuyến đi xa bất ngờ',body:'Một cơ hội đi tới nơi bạn chưa từng đến xuất hiện vào đúng lúc lịch sống đang rất ổn định.',min:16,max:65,choices:[
+  {text:'Đi ngay khi còn có thể',result:'Bạn đổi tiền và sự ổn định lấy một trải nghiệm khiến cách nhìn thế giới rộng hơn.',effect:{taiSan:-4,triTue:3,danhTieng:1}},
+  {text:'Rủ một người thân đi cùng',result:'Chuyến đi trở thành một ký ức chung thay vì chỉ là trải nghiệm cá nhân.',effect:{taiSan:-5,sucKhoe:2}},
+  {text:'Ở lại vì còn nhiều việc dang dở',result:'Bạn giữ nhịp sống hiện tại và để cơ hội đi qua.',effect:{taiSan:2}}
+ ]},
+ {title:'Cơ hội học một nghề tay trái',body:'Một người quen sẵn sàng dạy bạn một kỹ năng có thể kiếm thêm tiền, nhưng bạn phải dành nhiều buổi tối để học từ đầu.',min:17,max:55,choices:[
+  {text:'Học nghiêm túc',result:'Bạn có thêm một kỹ năng không liên quan trực tiếp tới con đường hiện tại.',effect:{triTue:3,taiSan:2,sucKhoe:-2}},
+  {text:'Học đủ để hiểu cơ bản',result:'Bạn mở rộng hiểu biết nhưng không biến nó thành một cam kết mới.',effect:{triTue:2}},
+  {text:'Không nhận thêm việc',result:'Bạn giữ thời gian cho những gì đã quan trọng với mình.',effect:{sucKhoe:2}}
+ ]},
+ {title:'Một tin đồn sai về bạn',body:'Một câu chuyện bị kể sai bắt đầu lan trong nhóm người quen. Nó không quá nghiêm trọng, nhưng nếu im lặng, người khác có thể tin đó là thật.',min:18,max:75,choices:[
+  {text:'Đối chất trực tiếp với người tung tin',result:'Bạn chặn câu chuyện ngay từ nguồn nhưng khiến mâu thuẫn trở nên rõ ràng.',effect:{danhTieng:2,theLuc:-1}},
+  {text:'Giải thích cho những người quan trọng',result:'Bạn không cố thuyết phục tất cả mọi người, chỉ bảo vệ những quan hệ mình thực sự coi trọng.',effect:{danhTieng:2,triTue:1}},
+  {text:'Mặc kệ để thời gian trả lời',result:'Bạn không tiêu năng lượng vào việc kiểm soát mọi lời người khác nói.',effect:{sucKhoe:2,danhTieng:-1}}
+ ]},
+ {title:'Ngày bạn kiệt sức',body:'Bạn thức dậy và nhận ra cơ thể không muốn tiếp tục nhịp sống mấy tháng gần đây. Không có biến cố lớn, chỉ là mọi thứ đã tích tụ quá lâu.',min:25,max:75,choices:[
+  {text:'Dừng lại vài tuần',result:'Bạn hủy bớt lịch, mất một phần thu nhập và bắt đầu ngủ đủ trở lại.',effect:{sucKhoe:7,taiSan:-3}},
+  {text:'Giảm một nửa khối lượng công việc',result:'Bạn không dừng hoàn toàn nhưng buộc mình sống chậm hơn.',effect:{sucKhoe:4,taiSan:-1}},
+  {text:'Cố vượt qua bằng ý chí',result:'Bạn vẫn hoàn thành công việc, đổi lại cơ thể tiếp tục trả giá.',effect:{taiSan:4,sucKhoe:-6}}
+ ]},
+ {title:'Một vật kỷ niệm được tìm thấy',body:'Trong lúc dọn đồ cũ, bạn tìm thấy một vật nhỏ gắn với những năm đầu đời và những người đã ở bên mình khi đó.',min:25,max:90,choices:[
+  {text:'Mang nó tới gặp người thân',result:'Một buổi chiều bình thường trở thành lúc mọi người nhắc lại những chuyện tưởng đã quên.',effect:{sucKhoe:2,danhTieng:1}},
+  {text:'Giữ lại cho riêng mình',result:'Bạn cất món đồ ở nơi dễ thấy hơn, như một điểm neo cho ký ức.',effect:{sucKhoe:2}},
+  {text:'Cho đi vì không muốn giữ quá nhiều quá khứ',result:'Bạn để vật cũ tiếp tục một câu chuyện khác.',effect:{triTue:1}}
+ ]},
+ {title:'Lời mời phát biểu trước đám đông',body:'Một nhóm nhỏ mời bạn kể về kinh nghiệm của mình trước nhiều người. Bạn không phải người nổi tiếng, nhưng họ cho rằng câu chuyện thật của bạn có giá trị.',min:28,max:75,choices:[
+  {text:'Nhận lời và nói thật về cả thất bại',result:'Bạn không tô đẹp cuộc đời và bất ngờ nhận được nhiều sự đồng cảm.',effect:{danhTieng:5}},
+  {text:'Chuẩn bị kỹ như một bài học',result:'Bạn biến trải nghiệm thành những điều có cấu trúc và dễ hiểu.',effect:{triTue:3,danhTieng:2}},
+  {text:'Từ chối vì không thích đứng trước đám đông',result:'Bạn giữ cuộc sống của mình riêng tư hơn.',effect:{sucKhoe:1}}
+ ]}
+];
+
 const businessEvents:Event[]=[
  {title:'Thương chiến: đối thủ phá giá',body:'Đối thủ trực tiếp giảm giá mạnh để kéo khách hàng khỏi công ty bạn. Nhân viên muốn biết bạn sẽ đáp trả thế nào.',min:19,max:75,role:'entrepreneur',choices:[
   {text:'Giảm giá đối đầu trực diện',result:'Bạn chấp nhận đốt tiền để giữ thị phần. Cuộc chiến lập tức nóng lên.',effect:{taiSan:-2},businessAction:'price_war'},
@@ -360,7 +474,7 @@ function rng(seed:number){let t=seed+0x6D2B79F5;return()=>{t=Math.imul(t^t>>>15,
 const names=['An','Minh','Lâm','Khánh','Hạ','Vy','Nam','Phong','Linh','Nguyên'];
 const companyNames=['Mộc Phong','Bắc Minh','Hải Đăng','Tân Lộ','Thiên Hà','Minh Việt'];
 const clamp=(n:number)=>Math.max(0,Math.min(100,n));
-const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân'};
+const roleNames:any={employee:'Nhân viên',researcher:'Nhà nghiên cứu',freelancer:'Làm nghề tự do',entrepreneur:'Doanh nhân',teacher:'Giáo viên',medic:'Nhân viên y tế',engineer:'Kỹ sư',artisan:'Thợ thủ công'};
 
 
 
@@ -485,13 +599,15 @@ function fresh(seed=Math.floor(Math.random()*99999999)){
   seed,age:0,name:names[Math.floor(r()*names.length)],
   stats:{sucKhoe:80+Math.floor(r()*16),triTue:25+Math.floor(r()*31),theLuc:25+Math.floor(r()*31),danhTieng:0,taiSan:10},
   logs:[{age:0,text:'Bạn cất tiếng khóc chào đời. Một nhân sinh mới bắt đầu.',kind:'event'}]as Log[],
-  seeds:[]as Seed[],flags:{}as Record<string,boolean>,roles:[]as Role[],company:null as Company|null,world:createWorld(seed),crisis:createCrisis(),
+  seeds:[]as Seed[],flags:{}as Record<string,boolean>,recentEvents:[]as string[],roles:[]as Role[],company:null as Company|null,world:createWorld(seed),crisis:createCrisis(),
   martial:{discovered:false,power:14+Math.floor(r()*8),experience:0,wounds:0,techniques:[],grudges:[]}as Martial,
   cultivation:createCultivation(),
   science:createScience(),
   npcs:[
    {id:'me',name:'Mẹ',role:'Gia đình',relation:'Mẹ',bond:78,memory:'Người đã chăm sóc bạn từ thuở nhỏ.',alive:true},
-   {id:'friend',name:['Huy','Mai','Tùng','Lan'][Math.floor(r()*4)],role:'Bạn thuở nhỏ',relation:'Bạn bè',bond:45,memory:'Hai người từng chia sẻ những ngày tuổi thơ.',alive:true}
+   {id:'friend',name:['Huy','Mai','Tùng','Lan'][Math.floor(r()*4)],role:'Bạn thuở nhỏ',relation:'Bạn bè',bond:45,memory:'Hai người từng chia sẻ những ngày tuổi thơ.',alive:true},
+   {id:'sibling',name:['Hân','Long','Thảo','Duy'][Math.floor(r()*4)],role:'Gia đình mở rộng',relation:'Anh/chị/em họ',bond:38,memory:'Hai người lớn lên với nhiều dịp gặp nhau trong những năm đầu đời.',alive:true},
+   {id:'neighbor',name:['Bình','Nga','Phúc','Yến'][Math.floor(r()*4)],role:'Hàng xóm lâu năm',relation:'Hàng xóm',bond:28,memory:'Một người sống gần gia đình bạn từ nhiều năm trước.',alive:true}
   ]as NPC[],
   turn:0,dead:false,current:events[4]
  }
@@ -522,6 +638,7 @@ function App(){
    if(!old.science.projects)old.science.projects=[];
    if(!old.science.cyberware)old.science.cyberware=[];
    if(!old.crisis)old.crisis=createCrisis();
+   if(!old.recentEvents)old.recentEvents=[];
    return old
   }catch{return fresh()}
  });
@@ -529,7 +646,7 @@ function App(){
  useEffect(()=>localStorage.setItem(KEY,JSON.stringify(g)),[g]);
  const title=useMemo(()=>g.dead?'Một đời đã khép lại':g.age<13?'Tuổi thơ':g.age<20?'Tuổi trẻ':g.age<60?'Trưởng thành':'Hậu vận',[g.age,g.dead]);
 
- function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science,crisis:Crisis){
+ function nextEvent(age:number,seed:number,turn:number,roles:Role[]=[],company:Company|null=null,martial:Martial,flags:Record<string,boolean>={},world:WorldState,cult:Cultivation,science:Science,crisis:Crisis,recentEvents:string[]=[]){
   if(age===14&&!flags.martial_intro_seen)return martialIntroEvent;
   if(martial.discovered&&age>=15&&!flags.martial_first_duel_done)return firstDuelEvent;
   const dueGrudge=martial.grudges.find(x=>x.active&&age>=x.dueAge);
@@ -550,7 +667,9 @@ function App(){
 
   const active=roles.filter(x=>x.active).map(x=>x.id);
   if(active.includes('entrepreneur')&&company&&company.status!=='closed'&&age===19)return businessEvents[0];
-  const profession=roleEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role));
+  const profession=[...roleEvents,...expandedRoleEvents].filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role));
+  const relationship=relationshipEvents.filter(e=>age>=e.min&&age<=e.max);
+  const expanded=expandedEvents.filter(e=>age>=e.min&&age<=e.max);
   const business=company&&company.status!=='closed'?businessEvents.filter(e=>age>=e.min&&age<=e.max&&e.role&&active.includes(e.role)):[];
   const martialPool=martial.discovered?martialEvents.filter(e=>age>=e.min&&age<=e.max):[];
   const cultivationPool=cult.discovered?cultivationEvents.filter(e=>age>=e.min&&age<=e.max):[];
@@ -568,6 +687,9 @@ function App(){
   else if(profession.length&&roll<.89)pool=[...profession,...profession,...generic,...cultivationPool,...sciencePool];
   else if(worldPool.length&&roll<.96)pool=[...worldPool,...worldPool,...generic,...profession,...martialPool,...cultivationPool,...sciencePool];
   else pool=[...generic,...profession,...martialPool,...cultivationPool,...sciencePool,...hybridSciencePool,...worldPool];
+  pool=[...pool,...relationship,...expanded];
+  const freshPool=pool.filter(e=>!recentEvents.includes(e.title));
+  if(freshPool.length>=Math.min(3,pool.length))pool=freshPool;
   return pool[Math.floor(r()*pool.length)]||events[4]
  }
 
@@ -854,6 +976,7 @@ function App(){
   if(g.current.title==='Mô hình AI bắt đầu tự sửa mình')flags.ai_threshold_seen=true;
   if(g.current.title==='Cấy ghép thần kinh thử nghiệm')flags.cyber_intro_seen=true;
   if(g.current.crisisKind)flags.major_crisis_seen=true;
+  if(g.current.title==='Một người hướng dẫn khó tính'&&c.text==='Nhận lời chỉ dẫn'&&!npcs.some((n:NPC)=>n.id==='mentor'))npcs.push({id:'mentor',name:['Thịnh','Hương','Kiên','Diệp'][g.seed%4],role:'Người hướng dẫn',relation:'Thầy/Cố vấn',bond:42,memory:'Người từng nhìn ra điểm yếu của bạn và đồng ý rèn giũa bạn trong nhiều năm.',alive:true});
   if(g.current.title==='Lời thách đấu đầu tiên'){
    flags.martial_first_duel_done=true;
    let rival=npcs.find((n:NPC)=>n.id==='martial_rival');
@@ -897,6 +1020,48 @@ function App(){
      if(company){company.cash=clamp(company.cash+7);company.market=clamp(company.market+4);company.staff=clamp(company.staff-4)}
      logs.push({age,text:'Nhân → Quả: Hệ AI từng được đưa ra sử dụng đã lan rộng hơn dự kiến. Năng suất tăng mạnh, nhưng nhiều quyết định giờ diễn ra nhanh hơn khả năng con người kiểm soát chúng.',kind:'effect'})
     }
+    if(q.id==='family_care_return'){
+     const mom=npcs.find((n:NPC)=>n.id==='me');if(mom){mom.bond=clamp(mom.bond+12);mom.memory='Bạn từng gác công việc để đưa mẹ đi kiểm tra sức khỏe khi bà cố giấu cơn đau.'}
+     s.sucKhoe=clamp(s.sucKhoe+3);logs.push({age,text:'Nhân → Quả: Việc bạn không chủ quan với sức khỏe của mẹ giúp gia đình tránh một giai đoạn khó khăn hơn về sau.',kind:'effect'})
+    }
+    if(q.id==='friend_midnight'){
+     const friend=npcs.find((n:NPC)=>n.id==='friend');if(friend){friend.bond=clamp(friend.bond+14);friend.memory='Trong một đêm rất tệ, bạn đã không để họ phải ở một mình.'}
+     s.danhTieng=clamp(s.danhTieng+3);logs.push({age,text:'Nhân → Quả: Người bạn từng được bạn ở bên trong đêm khó khăn xuất hiện đúng lúc bạn cần một người thật sự đáng tin.',kind:'effect'})
+    }
+    if(q.id==='neighbor_trust'){
+     const neighbor=npcs.find((n:NPC)=>n.id==='neighbor');if(neighbor){neighbor.bond=clamp(neighbor.bond+16);neighbor.memory='Họ vẫn nhớ lần giao chìa khóa và giấy tờ quan trọng cho bạn mà mọi thứ đều được giữ nguyên vẹn.'}
+     logs.push({age,text:'Nhân → Quả: Sự tin cậy nhỏ giữa những người hàng xóm dần trở thành một quan hệ có thể dựa vào nhau.',kind:'effect'})
+    }
+    if(q.id==='mentor_recommend'){
+     const mentor=npcs.find((n:NPC)=>n.id==='mentor');if(mentor){mentor.bond=clamp(mentor.bond+10);mentor.memory='Sau nhiều năm rèn giũa, họ bắt đầu giới thiệu bạn với những người trong mạng lưới của mình.'}
+     s.triTue=clamp(s.triTue+4);s.danhTieng=clamp(s.danhTieng+6);logs.push({age,text:'Nhân → Quả: Người hướng dẫn năm xưa đặt uy tín của họ để giới thiệu bạn cho một cơ hội mà bạn khó tự chạm tới.',kind:'effect'})
+    }
+    if(q.id==='family_debt_paid'){
+     const sibling=npcs.find((n:NPC)=>n.id==='sibling');if(sibling){sibling.bond=clamp(sibling.bond+12);sibling.memory='Họ nhớ bạn từng chấp nhận hy sinh kế hoạch riêng để dọn một gánh nặng chung của gia đình.'}
+     s.taiSan=clamp(s.taiSan+5);logs.push({age,text:'Nhân → Quả: Khoản nợ đã được giải quyết từ lâu giúp gia đình tránh một tranh chấp mới, và một người thân chủ động hỗ trợ bạn khi có cơ hội.',kind:'effect'})
+    }
+    if(q.id==='family_debt_ignored'){
+     const sibling=npcs.find((n:NPC)=>n.id==='sibling');if(sibling){sibling.bond=clamp(sibling.bond-14);sibling.memory='Khoản nợ cũ từng khiến hai bên gia đình lạnh nhạt với nhau trong nhiều năm.'}
+     logs.push({age,text:'Nhân → Quả: Việc bạn từng từ chối gánh khoản nợ gia đình quay lại dưới dạng một mối quan hệ xa cách hơn.',kind:'effect'})
+    }
+    if(q.id==='student_returns'){
+     s.danhTieng=clamp(s.danhTieng+7);
+     if(!npcs.some((n:NPC)=>n.id==='former_student'))npcs.push({id:'former_student',name:['Khoa','Nhi','Tuấn','An'][g.seed%4],role:'Học sinh cũ',relation:'Học trò',bond:52,memory:'Người từng suýt bỏ học nhưng được bạn dành thời gian kéo trở lại.',alive:true});
+     logs.push({age,text:'Nhân → Quả: Học sinh từng định bỏ học quay lại với một cuộc sống ổn định và công khai cảm ơn người đã không bỏ cuộc với mình.',kind:'effect'})
+    }
+    if(q.id==='patient_returns'){
+     s.danhTieng=clamp(s.danhTieng+5);s.taiSan=clamp(s.taiSan+2);
+     logs.push({age,text:'Nhân → Quả: Gia đình bệnh nhân năm xưa tìm lại bạn. Họ không trả hết món nợ bằng tiền, nhưng mở ra một mối quan hệ bền hơn bạn tưởng.',kind:'effect'})
+    }
+    if(q.id==='safety_reputation'){
+     s.danhTieng=clamp(s.danhTieng+8);s.triTue=clamp(s.triTue+2);if(science.discovered)science.innovation=clamp(science.innovation+3);
+     logs.push({age,text:'Nhân → Quả: Dự án khác trong ngành gặp sự cố vì một lỗi tương tự. Quyết định từng khiến bạn bị phàn nàn giờ trở thành lý do người ta tin vào phán đoán của bạn.',kind:'effect'})
+    }
+    if(q.id==='apprentice_returns'){
+     s.danhTieng=clamp(s.danhTieng+5);s.taiSan=clamp(s.taiSan+4);
+     if(!npcs.some((n:NPC)=>n.id==='apprentice'))npcs.push({id:'apprentice',name:['Quân','Ly','Hòa','Trâm'][g.seed%4],role:'Người học việc cũ',relation:'Học trò',bond:55,memory:'Người từng vụng về học nghề dưới sự chỉ dẫn của bạn và sau này đã tự đứng vững.',alive:true});
+     logs.push({age,text:'Nhân → Quả: Người học việc năm xưa trở lại với tay nghề đã trưởng thành và đề nghị hợp tác như một người ngang hàng.',kind:'effect'})
+    }
    }
   }
 
@@ -911,6 +1076,18 @@ function App(){
    const me=npcs.find((n:NPC)=>n.id==='me');
    if(me){me.bond=clamp(me.bond+2);me.memory='Bạn vẫn dành thời gian cho bản thân và gia đình giữa những năm tháng bình lặng.'}
   }
+  if(g.current.title==='Mẹ giấu một cơn đau'){
+   const mom=npcs.find((n:NPC)=>n.id==='me');if(mom){mom.bond=clamp(mom.bond+(c.text==='Đưa mẹ đi kiểm tra ngay'?8:c.text==='Tin lời mẹ rằng không có gì nghiêm trọng'?-4:2));mom.memory=c.text==='Đưa mẹ đi kiểm tra ngay'?'Bạn đã nghiêm túc với sức khỏe của mẹ ngay cả khi bà cố gạt đi.':'Mẹ biết bạn vẫn để tâm, dù mỗi người có cách xử lý khác nhau.'}
+  }
+  if(g.current.title==='Bạn cũ gọi lúc nửa đêm'){
+   const friend=npcs.find((n:NPC)=>n.id==='friend');if(friend){friend.bond=clamp(friend.bond+(c.text==='Đi gặp ngay'?9:c.text==='Hẹn hôm khác vì đã quá muộn'?-5:4));friend.memory=c.text==='Đi gặp ngay'?'Bạn từng bỏ dở mọi việc để đến khi họ gọi giữa đêm.':'Hai người từng có một cuộc gọi dài vào giai đoạn khó khăn.'}
+  }
+  if(g.current.title==='Người thân muốn rời thành phố'){
+   const sibling=npcs.find((n:NPC)=>n.id==='sibling');if(sibling){sibling.bond=clamp(sibling.bond+(c.text==='Ủng hộ và giúp họ chuẩn bị'?7:c.text==='Cố thuyết phục họ ở lại'?-3:3));sibling.memory='Một quyết định chuyển nơi sống từng khiến hai người phải nhìn lại cách mình giữ quan hệ gia đình.'}
+  }
+  if(g.current.title==='Người hàng xóm để lại chìa khóa'){
+   const neighbor=npcs.find((n:NPC)=>n.id==='neighbor');if(neighbor){neighbor.bond=clamp(neighbor.bond+(c.text==='Nhận giúp và kiểm tra nhà thường xuyên'?8:c.text==='Từ chối vì không muốn giữ tài sản người khác'?-2:3))}
+  }
   if(g.current.title==='Chuyện ngoài thương trường'){
    const rival=npcs.find((n:NPC)=>n.id==='business_rival');
    if(rival&&c.businessAction==='fight_rival_son'){
@@ -921,17 +1098,18 @@ function App(){
   }
 
   if(science.discovered&&age%3===0)world.technology=clamp(world.technology+1+Math.floor(science.innovation/35));
+  const recentEvents=[...(g.recentEvents||[]),g.current.title].slice(-6);
   advanceWorld(world,g.seed,age,company,npcs,roles,crisis);
   const lifespanBonus=cultivation.realm>=4?30:cultivation.realm>=3?16:cultivation.realm>=2?8:0;
   const dead=s.sucKhoe<=0||age>=82+(g.seed%17)+lifespanBonus;
   if(dead)logs.push({age,text:'Cuộc đời khép lại. Những lựa chọn đã trở thành câu chuyện của riêng bạn.',kind:'event'});
-  setG({...g,age,stats:s,logs,seeds,flags,npcs,roles,company,martial,cultivation,science,world,crisis,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science,crisis)})
+  setG({...g,age,stats:s,logs,seeds,flags,recentEvents,npcs,roles,company,martial,cultivation,science,world,crisis,turn:g.turn+1,dead,current:nextEvent(age,g.seed,g.turn+1,roles,company,martial,flags,world,cultivation,science,crisis,recentEvents)})
  }
 
  function newLife(){if(confirm('Bắt đầu một nhân sinh mới? Tiến trình hiện tại sẽ được thay thế.')){setG(fresh());setTab('life')}}
 
  return <main>
-  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.10</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
+  <header><div className="brand"><span>NHÂN SINH LỘ</span><b>V0.11</b></div><button className="ghost" onClick={newLife}>↻ Tân Sinh</button></header>
   <section className="hud">
    <div className="identity"><div className="avatar">{g.name[0]}</div><div><h1>{g.name}</h1><p>{g.age} tuổi · {title}</p></div></div>
    <div className="stats">{Object.entries(g.stats).map(([k,v])=><div className="stat" key={k}><span>{icons[k]} {labels[k]}</span><b>{v}</b></div>)}</div>
