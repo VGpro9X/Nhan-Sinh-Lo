@@ -11,3 +11,8 @@ Tu tiên chỉ là một trong nhiều con đường có thể xuất hiện cù
 
 ## Quy tắc phát triển quan trọng nhất
 Mỗi checkpoint hoàn thành phải được build/test, commit lên `main`, deploy GitHub Pages và **dừng lại để người dùng test**. Chỉ tiếp tục checkpoint sau khi được xác nhận.
+
+## Phiên bản test hiện tại
+**V0.12 — Biên Niên Sử & Tân Sinh.** Truy cập https://vgpro9x.github.io/Nhan-Sinh-Lo/ để chơi thử. Bản ghi tối đa 24 cuộc đời được giữ trên chính trình duyệt/thiết bị, không đồng bộ đám mây; xóa dữ liệu trình duyệt sẽ xóa bản ghi.
+
+Kiểm thử mã nguồn: `npm run typecheck`, `npm test`, `npm run build`. V0.12 cần người dùng test và duyệt trước khi bắt đầu V0.13.
