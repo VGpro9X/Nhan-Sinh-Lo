@@ -36,8 +36,8 @@ export function discoverPaths(g:LifeSnapshot):ChroniclePath[]{
   add('cyber_martial','Võ giả cơ giới','Kết hợp võ đạo truyền thống với cơ thể tăng cường.',true);
  if(crisis?.resolved&&crisis.community>=54&&crisis.preparedness>=32)
   add('crisis_guardian','Người giữ lửa','Bước qua đại biến và để lại một cộng đồng có khả năng tự đứng vững.',true);
- if(people.some(x=>x.id==='former_student')&&people.some(x=>x.id==='apprentice'))
-  add('two_generations','Người truyền nghề hai thế hệ','Giúp cả một học trò và một người học việc tìm được chỗ đứng.',true);
+ if(g.age>=45&&people.some(x=>x.id==='former_student'||x.id==='apprentice'))
+  add('mentor_legacy','Người gieo hạt','Một học trò hoặc người học việc được bạn giúp đỡ đã trưởng thành và tìm thấy con đường riêng.',true);
  if(g.company&&g.company.market>=62&&g.company.staff>=14&&g.company.status!=='closed')
   add('company_legacy','Người dựng nghiệp','Gây dựng doanh nghiệp đủ lớn để tác động tới nhiều người.',true);
  if(completed&&g.age>=98&&cult?.discovered&&cult.realm>=3)
@@ -63,7 +63,6 @@ export function describeEnding(g:LifeSnapshot,paths:ChroniclePath[]):{title:stri
  if(g.martial?.discovered)return {title:'Dấu ấn người luyện võ',ending:cause};
  return {title:'Một nhân sinh riêng',ending:cause};
 }
-const keyOf=(x:LifeLog)=>x.age+'|'+x.text;
 export function chronicleHighlights(logs:LifeLog[]):LifeLog[]{
  if(logs.length<=14)return logs.slice();
  const scored=logs.map((log,index)=>{
